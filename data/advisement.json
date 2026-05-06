@@ -1,0 +1,169 @@
+{
+  "advisedSubjects": [
+    "CSEC001",
+    "CSEC002",
+    "CSEC003",
+    "CSMC311",
+    "CSMC312",
+    "CSMC313",
+    "PHIN103",
+    "THEN102"
+  ],
+  "electiveOptions": [
+    {
+      "no": "1",
+      "subject_code": "CSEC301",
+      "subject_title": "PARALLEL PROGRAMMING",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "2",
+      "subject_code": "CSEC302",
+      "subject_title": "DATA MINING AND TECHNIQUES",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "3",
+      "subject_code": "CSEC303",
+      "subject_title": "DIGITAL IMAGE PROCESSING",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "4",
+      "subject_code": "CSEC304",
+      "subject_title": "SOFTWARE APPLICATION PRODUCTS (SAP)",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "5",
+      "subject_code": "CSEC305",
+      "subject_title": "COMPILERS AND INTERPRETERS",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "6",
+      "subject_code": "CSEC306",
+      "subject_title": "MACHINE LEARNING PLATFORMS AND APPLICATIONS",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "7",
+      "subject_code": "CSEC307",
+      "subject_title": "INTRODUCTION TO DEEP LEARNING",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "8",
+      "subject_code": "CSEC308",
+      "subject_title": "UNDERGRADUATE SEMINAR",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "9",
+      "subject_code": "CSEC309",
+      "subject_title": "SCIENTIFIC COMPUTING",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "10",
+      "subject_code": "CSME201",
+      "subject_title": "SPECIAL TOPICS IN MATH FOR COMPUTER",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "11",
+      "subject_code": "CSME202",
+      "subject_title": "PROBABILITY THEORY FOR COMPUTER SCIENTISTS",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "12",
+      "subject_code": "CSME203",
+      "subject_title": "GRAPH THEORY",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "13",
+      "subject_code": "CSME204",
+      "subject_title": "COMPLEXITY THEORY",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "14",
+      "subject_code": "ENGE101",
+      "subject_title": "PROFESSIONAL COMMUNICATION WITH EMERGING MEDIA",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "15",
+      "subject_code": "ENGE102",
+      "subject_title": "LITERATURE OF THE BIKOL REGION",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "16",
+      "subject_code": "FILE101",
+      "subject_title": "PANITIKANG FILIPINO SA/NG IKA-21 SIGLO",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "17",
+      "subject_code": "FILS102",
+      "subject_title": "DALUMAT NG/SA FILIPINO",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "18",
+      "subject_code": "FILS103",
+      "subject_title": "SOSYEDAD AT LITERATURA/PANITIKANG PANLIPUNAN",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "19",
+      "subject_code": "FILS104",
+      "subject_title": "SINESOSYEDAD/PELIKULANG PANLIPUNAN",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "20",
+      "subject_code": "ITEC303",
+      "subject_title": "MOBILE COMPUTING AND COMMUNICATION",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "21",
+      "subject_code": "ITMC313",
+      "subject_title": "WEB SYSTEMS AND TECHNOLOGIES",
+      "units": "3",
+      "credited": ""
+    },
+    {
+      "no": "22",
+      "subject_code": "MSGE101",
+      "subject_title": "DIGITAL PHOTOGRAPHY",
+      "units": "3",
+      "credited": ""
+    }
+  ],
+  "lastScrapeTime": "2026-04-24T08:46:27.004Z"
+}

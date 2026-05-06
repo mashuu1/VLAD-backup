@@ -1,0 +1,9 @@
+# node_modules and logs are still ignored
+node_modules/
+dist/
+*.log
+.DS_Store
+client/node_modules/
+client/dist/
+ 
+.env

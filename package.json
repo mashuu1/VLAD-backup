@@ -1,0 +1,16 @@
+{
+  "name": "vlad-prototype",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev:server\"",
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "cd server && node index.js"
+  },
+  "dependencies": {
+    "react-router-dom": "^7.14.2"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
+ 
