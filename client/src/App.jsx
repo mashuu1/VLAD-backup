@@ -1543,42 +1543,48 @@ function Kaizen() {
         const saved = localStorage.getItem('manualSubjects');
         if (saved) {
           const subjects = JSON.parse(saved);
-          // Use unique course codes
           const codes = Array.from(new Set(subjects.map(s => s.course_code)));
           setAdvisedSubjects(codes);
           setKaizenStatus('done');
+          return true;
         } else {
           setKaizenStatus('idle');
+          return false;
         }
       } else {
-        // Fetch advisement data
         const res = await axios.get(`${API_BASE_URL}/api/kaizen/data`);
-        if (res.data.advisedSubjects.length > 0 || res.data.electiveOptions.length > 0) {
+        if (res.data.advisedSubjects && (res.data.advisedSubjects.length > 0 || res.data.electiveOptions.length > 0)) {
           setAdvisedSubjects(res.data.advisedSubjects);
           setElectiveOptions(res.data.electiveOptions);
           setLastScrapeTime(res.data.lastScrapeTime);
           setKaizenStatus('done');
+          
+          // Fetch offerings too
+          const offRes = await axios.get(`${API_BASE_URL}/api/scrape/data`);
+          if (offRes.data.entries) setOfferings(offRes.data.entries);
+          
+          return true;
         }
-      }
-      
-      // Fetch offerings data to extract instructors
-      const offRes = await axios.get(`${API_BASE_URL}/api/scrape/data`);
-      if (offRes.data.entries) {
-        setOfferings(offRes.data.entries);
+        return false;
       }
     } catch (err) {
-      if (err.response && err.response.status !== 404) {
-        setError('Failed to fetch KAIZEN data');
-      }
+      return false;
     }
   };
 
   useEffect(() => {
-    fetchKaizenData();
+    const initKaizen = async () => {
+      const hasData = await fetchKaizenData();
+      if (!hasData && !isManual) {
+        console.log('[KAIZEN] No data found, auto-starting sync...');
+        startKaizen();
+      }
+    };
+    initKaizen();
   }, [isManual]);
 
   const statusDescriptions = {
-    authenticating: '🔐 Awaiting Manual Login in the Portal Window...',
+    authenticating: '🔐 Running Automated Authentication...',
     scraping_advisement: '📂 Syncing Advised Subjects...',
     scraping_curriculum: '📑 Indexing Elective Options...',
   };

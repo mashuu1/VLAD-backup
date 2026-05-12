@@ -1,0 +1,256 @@
+<!DOCTYPE html><html class="js flexbox flexboxlegacy canvas canvastext webgl no-touch geolocation postmessage no-websqldatabase indexeddb hashchange history draganddrop websockets rgba hsla multiplebgs backgroundsize borderimage borderradius boxshadow textshadow opacity cssanimations csscolumns cssgradients cssreflections csstransforms csstransforms3d csstransitions fontface generatedcontent video audio localstorage sessionstorage webworkers no-applicationcache svg inlinesvg smil svgclippaths responsejs" style=""><head>
+	<title>Kaizen</title>
+	<link rel="stylesheet" media="all" href="/college/assets/application-27d901fe64210938f72813f39da99a02c601f6f8576a0662fa896c84e7edf172.css" data-turbolinks-track="true">
+	<link rel="stylesheet" media="screen" href="/college/assets/access-9a6fb894d72781bfa07b9758dd51e7cde866a347a95ff5386515526c0ffa9c05.css" data-turbolinks-track="true">
+	<script src="/college/assets/application-6fbe9c9ef4e8b20cbfec7f47897af192dc5ad5aa81d01842dec840f45ce1ad50.js" data-turbolinks-track="true"></script><style type="text/css"></style>
+	<script src="https://accounts.google.com/gsi/client" async="" defer=""></script>
+	<meta name="csrf-param" content="authenticity_token">
+<meta name="csrf-token" content="OpfzOwJGxtDWCzo9SOU3G8mJpBRzX4czq2WBkAaN3arI61GuAJ1pd4MHVsLy661ZGzObvmyJiVlWd1t45jjyQA==">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="shortcut icon" type="image/x-icon" href="/college/assets/kaizen-logo-7b08566abd6c65131d0f4dfa41cfc21e5de8ad8748f6667bb4d4a2babf7bf79b.png">
+<style type="text/css">.jqstooltip { position: absolute;left: 0px;top: 0px;visibility: hidden;background: rgb(0, 0, 0) transparent;background-color: rgba(0,0,0,0.6);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#99000000, endColorstr=#99000000);-ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#99000000, endColorstr=#99000000)";color: white;font: 10px arial, san serif;text-align: left;white-space: nowrap;padding: 5px;border: 1px solid white;z-index: 10000;}.jqsfield { color: white;font: 10px arial, san serif;text-align: left;}</style><link id="googleidentityservice" type="text/css" media="all" href="https://accounts.google.com/gsi/style" rel="stylesheet"><style id="googleidentityservice_button_styles">.qJTHM{-moz-user-select:none;-webkit-user-select:none;-ms-user-select:none;color:#202124;direction:ltr;-webkit-touch-callout:none;font-family:Roboto-Regular,arial,sans-serif;-webkit-font-smoothing:antialiased;font-weight:400;margin:0;overflow:hidden;-webkit-text-size-adjust:100%}.ynRLnc{left:-9999px;position:absolute;top:-9999px}.L6cTce{display:none}.bltWBb{overflow-wrap:break-word;word-break:break-word}.hSRGPd{color:#1a73e8;cursor:pointer;font-weight:500;text-decoration:none}.Bz112c-W3lGp{height:16px;width:16px}.Bz112c-E3DyYd{height:20px;width:20px}.Bz112c-r9oPif{height:24px;width:24px}.Bz112c-u2z5K{height:36px;width:36px}.Bz112c-uaxL4e{border-radius:10px}.LgbsSe-Bz112c{display:block}.S9gUrf-YoZ4jf{border:none;margin:0;padding:0}.S9gUrf-YoZ4jf *{border:none;margin:0;padding:0}.fFW7wc-ibnC6b>.aZ2wEe>div{border-color:#4285f4}.P1ekSe-ZMv3u{-webkit-transition:height .2s linear;transition:height .2s linear}.P1ekSe-ZMv3u>div:first-child{background-color:#1a73e8!important;-webkit-transition:width .3s linear;transition:width .3s linear}.P1ekSe-ZMv3u>div:nth-child(2){background-image:-webkit-gradient(linear,left top,right top,from(rgba(255,255,255,.7)),to(rgba(255,255,255,.7))),-webkit-gradient(linear,left top,right top,from(#1a73e8),to(#1a73e8))!important;background-image:-webkit-linear-gradient(left,rgba(255,255,255,.7),rgba(255,255,255,.7)),-webkit-linear-gradient(left,#1a73e8,#1a73e8)!important;background-image:linear-gradient(90deg,rgba(255,255,255,.7),rgba(255,255,255,.7)),linear-gradient(90deg,#1a73e8,#1a73e8)!important}.P1ekSe-ZMv3u>div:nth-child(3){background-image:-webkit-gradient(linear,left top,right top,from(rgba(255,255,255,.7)),to(rgba(255,255,255,.7))),-webkit-gradient(linear,left top,right top,from(#1a73e8),to(#1a73e8))!important;background-image:-webkit-linear-gradient(left,rgba(255,255,255,.7),rgba(255,255,255,.7)),-webkit-linear-gradient(left,#1a73e8,#1a73e8)!important;background-image:linear-gradient(90deg,rgba(255,255,255,.7),rgba(255,255,255,.7)),linear-gradient(90deg,#1a73e8,#1a73e8)!important}.haAclf{display:inline-block}.nsm7Bb-HzV7m-LgbsSe{border-radius:4px;box-sizing:border-box;-webkit-transition:background-color .218s,border-color .218s;transition:background-color .218s,border-color .218s;-moz-user-select:none;-webkit-user-select:none;-ms-user-select:none;-webkit-appearance:none;background-color:#fff;background-image:none;border:1px solid #dadce0;color:#3c4043;cursor:pointer;font-family:Google Sans,arial,sans-serif;font-size:14px;height:40px;letter-spacing:.25px;outline:none;overflow:hidden;padding:0 12px;position:relative;text-align:center;vertical-align:middle;white-space:nowrap;width:auto}@media screen and (-ms-high-contrast:active){.nsm7Bb-HzV7m-LgbsSe{border:2px solid windowText;color:windowText}}@media screen and (preferes-contrast:more){.nsm7Bb-HzV7m-LgbsSe{color:#000}}.nsm7Bb-HzV7m-LgbsSe.pSzOP-SxQuSe{font-size:14px;height:32px;letter-spacing:.25px;padding:0 10px}.nsm7Bb-HzV7m-LgbsSe.purZT-SxQuSe{font-size:11px;height:20px;letter-spacing:.3px;padding:0 8px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe{padding:0;width:40px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe.pSzOP-SxQuSe{width:32px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe.purZT-SxQuSe{width:20px}.nsm7Bb-HzV7m-LgbsSe.JGcpL-RbRzK{border-radius:20px}.nsm7Bb-HzV7m-LgbsSe.JGcpL-RbRzK.pSzOP-SxQuSe{border-radius:16px}.nsm7Bb-HzV7m-LgbsSe.JGcpL-RbRzK.purZT-SxQuSe{border-radius:10px}.nsm7Bb-HzV7m-LgbsSe.MFS4be-Ia7Qfc{border:none;color:#fff}.nsm7Bb-HzV7m-LgbsSe.MFS4be-v3pZbf-Ia7Qfc{background-color:#1a73e8}.nsm7Bb-HzV7m-LgbsSe.MFS4be-JaPV2b-Ia7Qfc{background-color:#202124;color:#e8eaed}@media screen and (prefers-contrast:more){.nsm7Bb-HzV7m-LgbsSe.MFS4be-JaPV2b-Ia7Qfc{color:#fff}}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{height:18px;margin-right:8px;min-width:18px;width:18px}.nsm7Bb-HzV7m-LgbsSe.pSzOP-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{height:14px;min-width:14px;width:14px}.nsm7Bb-HzV7m-LgbsSe.purZT-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{height:10px;min-width:10px;width:10px}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-Bz112c{margin-left:8px;margin-right:-4px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{margin:0;padding:10px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe.pSzOP-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{padding:8px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe.purZT-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{padding:4px}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-top-left-radius:3px;border-bottom-left-radius:3px;display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-pack:center;-webkit-justify-content:center;justify-content:center;-webkit-box-align:center;-webkit-align-items:center;align-items:center;background-color:#fff;height:36px;margin-left:-10px;margin-right:12px;min-width:36px;width:36px}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf .nsm7Bb-HzV7m-LgbsSe-Bz112c,.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf .nsm7Bb-HzV7m-LgbsSe-Bz112c{margin:0;padding:0}.nsm7Bb-HzV7m-LgbsSe.pSzOP-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{height:28px;margin-left:-8px;margin-right:10px;min-width:28px;width:28px}.nsm7Bb-HzV7m-LgbsSe.purZT-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{height:16px;margin-left:-6px;margin-right:8px;min-width:16px;width:16px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-radius:3px;margin-left:2px;margin-right:0;padding:0}.nsm7Bb-HzV7m-LgbsSe.JGcpL-RbRzK .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-radius:18px}.nsm7Bb-HzV7m-LgbsSe.pSzOP-SxQuSe.JGcpL-RbRzK .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-radius:14px}.nsm7Bb-HzV7m-LgbsSe.purZT-SxQuSe.JGcpL-RbRzK .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-radius:8px}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-bN97Pc-sM5MNb{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-align-items:center;-webkit-box-align:center;align-items:center;-webkit-flex-direction:row;-webkit-box-orient:horizontal;-webkit-box-direction:normal;flex-direction:row;-webkit-box-pack:justify;-webkit-justify-content:space-between;justify-content:space-between;-webkit-flex-wrap:nowrap;flex-wrap:nowrap;height:100%;position:relative;width:100%}.nsm7Bb-HzV7m-LgbsSe .oXtfBe-l4eHX{-webkit-box-pack:center;-webkit-justify-content:center;justify-content:center}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-BPrWId{-webkit-flex-grow:1;-webkit-box-flex:1;flex-grow:1;font-family:Google Sans,arial,sans-serif;font-weight:500;overflow:hidden;text-overflow:ellipsis;vertical-align:top}.nsm7Bb-HzV7m-LgbsSe.purZT-SxQuSe .nsm7Bb-HzV7m-LgbsSe-BPrWId{font-weight:300}.nsm7Bb-HzV7m-LgbsSe .oXtfBe-l4eHX .nsm7Bb-HzV7m-LgbsSe-BPrWId{-webkit-flex-grow:0;-webkit-box-flex:0;flex-grow:0}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-MJoBVe{-webkit-transition:background-color .218s;transition:background-color .218s;bottom:0;left:0;position:absolute;right:0;top:0}.nsm7Bb-HzV7m-LgbsSe:focus,.nsm7Bb-HzV7m-LgbsSe:hover{box-shadow:none;border-color:rgb(210,227,252);outline:none}.nsm7Bb-HzV7m-LgbsSe:focus-within{outline:2px solid #00639b;border-color:transparent}.nsm7Bb-HzV7m-LgbsSe:hover .nsm7Bb-HzV7m-LgbsSe-MJoBVe{background:rgba(66,133,244,.08)}.nsm7Bb-HzV7m-LgbsSe:active .nsm7Bb-HzV7m-LgbsSe-MJoBVe,.nsm7Bb-HzV7m-LgbsSe:focus .nsm7Bb-HzV7m-LgbsSe-MJoBVe{background:rgba(66,133,244,.1)}.nsm7Bb-HzV7m-LgbsSe.MFS4be-Ia7Qfc:hover .nsm7Bb-HzV7m-LgbsSe-MJoBVe{background:rgba(255,255,255,.24)}.nsm7Bb-HzV7m-LgbsSe.MFS4be-Ia7Qfc:active .nsm7Bb-HzV7m-LgbsSe-MJoBVe,.nsm7Bb-HzV7m-LgbsSe.MFS4be-Ia7Qfc:focus .nsm7Bb-HzV7m-LgbsSe-MJoBVe{background:rgba(255,255,255,.32)}.nsm7Bb-HzV7m-LgbsSe .n1UuX-DkfjY{border-radius:50%;display:-webkit-box;display:-webkit-flex;display:flex;height:20px;margin-left:-4px;margin-right:8px;min-width:20px;width:20px}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId{font-family:Roboto;font-size:12px;text-align:left}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff .fmcmS,.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId .ssJRIf{overflow:hidden;text-overflow:ellipsis}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-align-items:center;-webkit-box-align:center;align-items:center;color:#5f6368;fill:#5f6368;font-size:11px;font-weight:400}.nsm7Bb-HzV7m-LgbsSe.jVeSEe.MFS4be-Ia7Qfc .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff{color:#e8eaed;fill:#e8eaed}@media screen and (prefers-contrast:more){.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff,.nsm7Bb-HzV7m-LgbsSe.jVeSEe.MFS4be-Ia7Qfc .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff{color:#000;fill:#000}}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff .Bz112c{height:18px;margin:-3px -3px -3px 2px;min-width:18px;width:18px}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-top-left-radius:0;border-bottom-left-radius:0;border-top-right-radius:3px;border-bottom-right-radius:3px;margin-left:12px;margin-right:-10px}.nsm7Bb-HzV7m-LgbsSe.jVeSEe.JGcpL-RbRzK .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-radius:18px}.L5Fo6c-sM5MNb{border:0;display:block;left:0;position:relative;top:0}.L5Fo6c-bF1uUb{border-radius:4px;bottom:0;cursor:pointer;left:0;position:absolute;right:0;top:0}.L5Fo6c-bF1uUb:focus{border:none;outline:none}sentinel{}</style></head>
+<body>
+	<header id="header" class="navbar navbar-fixed-top">
+		<div class="navbar-header">
+			<a class="navbar-brand navbar-brand-login" href="javascript:void(0);">
+				<span class="logo-figure"></span>
+				<span class="logo-text"></span>
+			</a>
+		</div>
+	</header>
+	<section id="main" role="main">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3 col-xs-10 col-xs-offset-1">
+				<div class="text-center mb10">
+					<span class="seal-login">
+						<img src="https://services.adnu.edu.ph/college/assets/adnu-logo-de30657c29d1b3c409ebe49f40ec979e29ba828d6c2b7a7374b340ddea2e606f.png">						
+					</span>
+					<h4 class="text-muted mt-0 font-alt">Welcome to KAIZEN</h4>
+				</div>
+				<hr>
+				<div id="divVersion" class="alert alert-info text-center">
+					<span class="semibold">Heimin 0.6</span>
+				</div>
+				<div id="divError"></div>
+				<div class="panel-group panel-group-compact" id="divSignInOptions">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h4 class="panel-title">
+								<a id="lnkSignInSpecial" data-toggle="collapse" data-parent="#divSignInOptions" href="#divSignIn_1" class="collapsed">
+									<span class="arrow mr5"></span>
+									<span data-toggle="tooltip" data-container="body" data-original-title="For special users only." data-placement="top">
+									Sign In
+									</span>
+								</a>
+							</h4>
+						</div>
+						<div id="divSignIn_1" class="panel-collapse collapse" style="height: auto;">
+							<form id="formLogin" action="https://services.adnu.edu.ph/college/login" accept-charset="UTF-8" onsubmit="return false;">
+								<div class="indicator">
+									<span class="spinner kaizen-spinner"></span>
+								</div>
+								<div class="panel-body">
+									<div class="form-group">
+										<div class="form-stack has-icon pull-left">
+											<input type="text" id="txtUsername" value="" class="form-control input-lg" placeholder="Username" oninput="return forceLower(this);" maxlength="50">
+											<i class="ico-user2 form-control-icon"></i>
+										</div>
+										<div class="form-stack has-icon pull-left">
+
+											<input type="password" id="txtPassword" value="" class="form-control input-lg" placeholder="Password" maxlength="40">
+											<i class="ico-lock2 form-control-icon"></i>
+										</div>
+									</div>
+									<div class="alert alert-dismissable alert-info">
+										<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+										<strong>Note: </strong>
+										<br>
+										<span>
+											Use this method to sign in if you have special privileges
+											assigned to your user account. Use the other method when
+											signing in with your gbox account.
+										</span>
+									</div>
+									<div class="form-group nm">
+										<button id="btnSignIn" type="submit" class="btn btn-block btn-primary ladda-button ladda-unset" data-style="zoom-out">
+											<span class="ladda-label">Sign In</span>
+										</button>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h4 class="panel-title">
+								<a data-toggle="collapse" data-parent="#divSignInOptions" href="#divSignIn_2">
+									<span class="arrow mr5"></span> Sign In with Google
+								</a>
+							</h4>
+						</div>
+						<div id="divSignIn_2" class="panel-collapse collapse in" style="height: auto;">
+							<div class="panel-body">
+								<div class="indicator">
+									<span class="spinner kaizen-spinner"></span>
+								</div>
+								<div class="alert alert-dismissable alert-info">
+									<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+									<strong>Instruction: </strong>
+									<br>
+									<span>
+										Please click the <span class="label label-info">Sign In</span>
+										button below to sign in to KAIZEN using a Google user account.
+										Only gbox accounts provided by the university are allowed to
+										sign in with Google.
+									</span>
+								</div>
+								<div id="g_id_onload" data-client_id="966507032773-tpnmkqdpk3pvfvp52hn4bin9e3un4f0m.apps.googleusercontent.com" data-context="signin" data-ux_mode="popup" data-callback="onSignIn" data-auto_prompt="false">
+								</div>
+								<div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin" data-size="large" data-locale="en" data-logo_alignment="left"><div class="S9gUrf-YoZ4jf" style="position: relative;"><div><div tabindex="0" role="button" aria-labelledby="button-label" class="nsm7Bb-HzV7m-LgbsSe  hJDwNd-SxQuSe i5vt6e-Ia7Qfc uaxL4e-RbRzK"><div class="nsm7Bb-HzV7m-LgbsSe-MJoBVe"></div><div class="nsm7Bb-HzV7m-LgbsSe-bN97Pc-sM5MNb "><div class="nsm7Bb-HzV7m-LgbsSe-Bz112c"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="LgbsSe-Bz112c"><g><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><path fill="none" d="M0 0h48v48H0z"></path></g></svg></div><span class="nsm7Bb-HzV7m-LgbsSe-BPrWId">Mag-sign in</span><span class="L6cTce" id="button-label">Mag-sign in sa Google. Magbubukas sa bagong tab</span></div></div></div><iframe src="https://accounts.google.com/gsi/button?type=standard&amp;shape=rectangular&amp;theme=outline&amp;text=signin&amp;size=large&amp;logo_alignment=left&amp;is_fedcm_supported=true&amp;client_id=966507032773-tpnmkqdpk3pvfvp52hn4bin9e3un4f0m.apps.googleusercontent.com&amp;iframe_id=gsi_688125_291378&amp;cas=oLKiouuP8NvdMF%2FzOXqFkvCLsgczJ1FWLySyRIO7AWs&amp;hl=en" class="L5Fo6c-PQbLGe" allow="identity-credentials-get" id="gsi_688125_291378" title="Button na Mag-sign in gamit ang Google" style="display: block; position: relative; top: 0px; left: 0px; height: 0px; width: 0px; border: 0px;"></iframe></div></div>
+								<a id="linkGoogleSignIn" href="https://services.adnu.edu.ph/college/loginGoogle" hidden=""></a>
+								<hr>
+								<div class="alert alert-dismissable alert-warning">
+									<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+									<strong>Security Notice: </strong>
+									<br>
+									<span>
+										If other people have access to this browser,
+										please make sure to sign out of your gbox account
+										after signing out of KAIZEN. Click on the button below
+										to sign out of your gbox account.
+									</span>
+								</div>
+								<a id="linkGoogleSignOut" class="btn btn-default btn-block" href="javascript:void(0);">Sign Out of Google</a>
+								<a id="linkSignOut" href="https://services.adnu.edu.ph/college/logoutGoogle" hidden=""></a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="modalChangePassword" class="modal fade">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header text-center">
+					<button type="button" class="close" data-dismiss="modal">×</button>
+					<h4 class="semibold modal-title">Change Password</h4>
+				</div>
+				<div class="modal-body text-center">
+					<form class="panel" id="formChangePassword" action="https://services.adnu.edu.ph/college/account/password/activate" onsubmit="return false;">
+						<div class="panel-body">
+							<div class="form-group">
+								<div class="form-stack has-icon pull-left">
+									<input type="text" name="user_name" id="txtChangePassUsername" value="" class="form-control input-lg" readonly="readonly">
+									<i class="ico-user form-control-icon"></i>
+								</div>
+								<div class="form-stack has-icon pull-left">
+									<input type="password" name="old_pass_word" id="txtChangePassOld" value="" class="form-control input-lg" placeholder="Temporary/Old Password">
+									<i class="ico-lock2 form-control-icon"></i>
+								</div>
+								<div class="form-stack has-icon pull-left">
+									<input type="password" name="new_pass_word" id="txtChangePassNew" value="" class="form-control input-lg" placeholder="New Password">
+									<i class="ico-lock2 form-control-icon"></i>
+								</div>
+								<div class="form-stack has-icon pull-left">
+									<input type="password" name="check_pass_word" id="txtChangePassConfirm" value="" class="form-control input-lg" placeholder="Re-enter/Confirm New Password">
+									<i class="ico-lock2 form-control-icon"></i>
+								</div>
+							</div>
+							<div id="divChangePassError" class="mb15"></div>
+							<div class="form-group nm">
+								<button name="button" type="submit" id="btnChangePassConfirm" class="btn btn-block btn-primary ladda-button ladda-unset" data-style="zoom-out"><span class="semibold ladda-label">Ok</span></button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div><!-- /.modal-content -->
+		</div><!-- /.modal-dialog -->
+	</div>
+	<div id="modalPasswordChanged" class="modal fade">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header text-center">
+					<button type="button" class="close" data-dismiss="modal">×</button>
+					<h4 class="semibold modal-title">Password Changed</h4>
+				</div>
+				<div class="modal-body text-center">
+					<p>Your password was successfully changed.</p>
+				</div>
+				<div class="modal-footer">
+					<button id="btnSignInAgain" type="button" class="btn btn-success" data-dismiss="modal">Sign In Again</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<br><br>
+	<div class="pre-footer-login pt15">
+		<div class="container pt10">
+			<div class="row">
+				<div class="col-md-4 col-sm-8">
+					<h4 class="font-alt mt0">KAIZEN</h4>
+					<p>Kaizen is a web application designed as an information system for the Colleges of the Ateneo de Naga University. The system aims to support features from enrollment to generation of TOR.</p>
+				</div>
+				<div class="hidden-lg hidden-md col-xs-12 mb10"></div>
+				<div class="col-md-4 col-sm-6">
+					<h4 class="font-alt mt0">Links</h4>
+					<div class="form-group">
+						<a href="https://www.adnu.edu.ph" target="_blank">AdNU Website</a>
+						<br>
+						<a href="https://services.adnu.edu.ph" target="_blank">Management Information System</a>
+					</div>
+					<h4 class="font-alt mt0"><span data-toggle="tooltip" data-original-title="Accessible inside AdNU only." data-placement="right">AdNU Intranet</span></h4>
+					<div class="form-group">
+						<a href="https://insite.adnu.edu.ph" target="_blank">Insite</a>
+						<br>
+						<a href="http://personnel.adnu.edu.ph" target="_blank">Online HR Services</a>
+					</div>
+				</div>
+				<div class="col-md-4 col-sm-6">
+					<h4 class="font-alt mt0">Contact Us</h4>
+					<div class="form-group">
+						<p>If you have questions or suggestions about Kaizen, please do not hesitate to contact us and we will be happy to assist you through any of the following:</p>
+						<i class="ico-envelop mr5"></i><a href="https://services.adnu.edu.ph/mis/contact/?service=College%20Web-based%20Information%20System%20%28KAIZEN%29" target="_blank">Contact Us Form</a>
+						<br><i class="ico-call-incoming mr5" data-toggle="tooltip" data-container="body" data-placement="top" data-original-title="Direct Line (VoIP)"></i>(054) 881 4147<i class="ico-phone3 ml5 mr5" data-toggle="tooltip" data-container="body" data-placement="top" data-original-title="Local VoIP"></i>2072
+						<br><i class="ico-phone mr5" data-toggle="tooltip" data-container="body" data-placement="top" data-original-title="Analog"></i>(054) 472 2368 local 2436
+						<address>
+							<i class="ico-office mr5"></i>S218 2F Santos bldg.
+							<br>Ateneo de Naga University, Ateneo Avenue
+							<br>Naga City 4400 Philippines
+						</address>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-xs-12">
+					<p><span data-toggle="tooltip" data-container="body" data-placement="top" data-original-title="Recommended browsers"><i class="ico-chrome"></i><i class="ico-firefox ml5"></i><i class="ico-opera ml5"></i></span></p>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+	<div class="footer-padding"></div>
+	<footer class="footer footer-login navbar-fixed-bottom top-border-shadow">
+				<div class="footer-bottom pa10">
+			<div class="container-fluid">
+				<div class="row">
+					<div class="col-sm-12">
+						© Copyright 2026
+						<a href="https://www.adnu.edu.ph">Ateneo de Naga University</a>
+						<span class="hidden-xs"> - <span class="hidden-sm">Developed by the </span><a href="https://services.adnu.edu.ph/mis">Management Information Systems</a></span>
+							<span class="pull-right"><span>243</span>/0.6.1</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</footer>
+	<script src="/college/assets/app-5227a1fa77ccaaed1bb779340a9ec1647b42965778963da695c4c4eb94f9a480.js" data-turbolinks-track="true"></script>
+		<script src="/college/assets/access-login-e70b55cba436de9ac4493a2053cdb33ee04ccb7e9d6c352911353c1a15dc4039.js" data-turbolinks-track="reload"></script>
+
+
+
+</body></html>

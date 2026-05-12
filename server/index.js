@@ -682,7 +682,7 @@ app.post('/api/kaizen/start', async (req, res) => {
             
             // Run with headless: false to physically monitor the automated flow
             const browser = await chromium.launch({ 
-                headless: false,
+                headless: true,
                 args: ['--no-sandbox', '--disable-setuid-sandbox'] 
             });
             const context = await browser.newContext();

@@ -3076,7 +3076,7 @@
     "section": "GCN10Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "F. Cueto",
     "open_slots": "CLOSED"
   },
   {
@@ -3086,7 +3086,7 @@
     "section": "GCN11Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "S. Aldecoa",
     "open_slots": "1"
   },
   {
@@ -3096,7 +3096,7 @@
     "section": "GCN12Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "S. Aldecoa",
     "open_slots": "CLOSED"
   },
   {
@@ -3106,7 +3106,7 @@
     "section": "GCN13Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "M. Real",
     "open_slots": "1"
   },
   {
@@ -3116,7 +3116,7 @@
     "section": "GCN14Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "S. Aldecoa",
     "open_slots": "1"
   },
   {
@@ -3126,7 +3126,7 @@
     "section": "GCN15Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "P.A. Cedilla",
     "open_slots": "1"
   },
   {
@@ -3136,7 +3136,7 @@
     "section": "GCN16Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "F. Bien",
     "open_slots": "1"
   },
   {
@@ -3146,7 +3146,7 @@
     "section": "GCN17Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "S. Aldecoa",
     "open_slots": "1"
   },
   {
@@ -3156,7 +3156,7 @@
     "section": "GCN18Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "F. Bien",
     "open_slots": "1"
   },
   {
@@ -3166,7 +3166,7 @@
     "section": "GCN19Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "J.P. Fulgentes",
     "open_slots": "1"
   },
   {
@@ -3186,7 +3186,7 @@
     "section": "GCN20Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "M. Real",
     "open_slots": "1"
   },
   {
@@ -3196,7 +3196,7 @@
     "section": "GCN21Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "F. Bien",
     "open_slots": "1"
   },
   {
@@ -3206,7 +3206,7 @@
     "section": "GCN22Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "S. Aldecoa",
     "open_slots": "1"
   },
   {
@@ -3216,7 +3216,7 @@
     "section": "GCN23Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "F. Bien",
     "open_slots": "1"
   },
   {
@@ -3226,7 +3226,7 @@
     "section": "GCN24Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "F. Cueto",
     "open_slots": "2"
   },
   {
@@ -3236,7 +3236,7 @@
     "section": "GCN2Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "J.P. Fulgentes",
     "open_slots": "1"
   },
   {
@@ -3246,7 +3246,7 @@
     "section": "GCN3Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "J.P. Fulgentes",
     "open_slots": "1"
   },
   {
@@ -3256,7 +3256,7 @@
     "section": "GCN4Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "F. Cueto",
     "open_slots": "1"
   },
   {
@@ -3266,7 +3266,7 @@
     "section": "GCN5Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "P.A. Cedilla",
     "open_slots": "1"
   },
   {
@@ -3276,7 +3276,7 @@
     "section": "GCN6Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "M. Real",
     "open_slots": "1"
   },
   {
@@ -3286,7 +3286,7 @@
     "section": "GCN7Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "P.A. Cedilla",
     "open_slots": "1"
   },
   {
@@ -3296,7 +3296,7 @@
     "section": "GCN8Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "M. Real",
     "open_slots": "1"
   },
   {
@@ -3306,7 +3306,7 @@
     "section": "GCN9Am",
     "schedule_raw": "---",
     "room": "---",
-    "instructor": "TBA",
+    "instructor": "F. Cueto",
     "open_slots": "1"
   },
   {
@@ -4116,7 +4116,7 @@
     "section": "AC12Am",
     "schedule_raw": "TUE 03:00PM - 04:30PM",
     "room": "B113",
-    "instructor": "W. Almoneda",
+    "instructor": "J.R. SeÑora",
     "open_slots": "2"
   },
   {
@@ -4546,7 +4546,7 @@
     "section": "ZT13Am",
     "schedule_raw": "THU 09:00AM - 10:30AM",
     "room": "P112",
-    "instructor": "J.R. SeÑora",
+    "instructor": "W. Almoneda",
     "open_slots": "22"
   },
   {
