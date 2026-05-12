@@ -1,7 +1,6 @@
 import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 
-export const downloadScheduleAsPDF = async (elementId, filename = 'my-schedule.pdf') => {
+export const downloadScheduleAsPNG = async (elementId, filename = 'my-schedule.png') => {
   const element = document.getElementById(elementId);
   if (!element) {
     console.error(`Element with id ${elementId} not found`);
@@ -14,7 +13,7 @@ export const downloadScheduleAsPDF = async (elementId, filename = 'my-schedule.p
     const body = element.querySelector('.calendar-body');
     const originalBodyStyle = body ? body.style.cssText : '';
     
-    // Force a wider, more readable layout for the PDF
+    // Force a wider, more readable layout for the image
     element.style.width = '1200px';
     element.style.maxWidth = 'none';
     
@@ -48,16 +47,17 @@ export const downloadScheduleAsPDF = async (elementId, filename = 'my-schedule.p
     element.style.cssText = originalStyle;
 
     const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'px',
-      format: [canvas.width, canvas.height]
-    });
-
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-    pdf.save(filename);
+    
+    // Trigger download
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = imgData;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    console.error('Error generating image:', error);
     throw error;
   }
 };

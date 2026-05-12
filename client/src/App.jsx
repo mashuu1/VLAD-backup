@@ -5,7 +5,7 @@ import './index.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vlad-trends-backend.shares.zrok.io';
 import { getDifficulty } from './difficulty_map';
-import { downloadScheduleAsPDF } from './pdfUtils';
+import { downloadScheduleAsPNG } from './pdfUtils';
 
 
 function Login() {
@@ -615,10 +615,20 @@ function SchedulerQuestionnaire({ advisedSubjects, offerings, onGenerate, onCanc
                     border: `1px solid ${idx === 0 ? '#2563eb' : '#1e293b'}`, borderRadius: '16px', 
                     display: 'flex', alignItems: 'center', gap: '1.5rem', cursor: 'grab'
                   }}>
-                  <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#2563eb' : '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#ffffff' }}>{idx + 1}</span>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#2563eb' : '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#ffffff', flexShrink: 0 }}>{idx + 1}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <span style={{ color: idx === 0 ? '#2563eb' : '#475569', fontWeight: 'bold', fontSize: '0.95rem' }}>{item}</span>
                     <span style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.25rem' }}>{RANKING_DESCRIPTIONS[item]}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <button 
+                      disabled={idx === 0} 
+                      onClick={(e) => { e.stopPropagation(); const newRank = [...answers.ranking]; const temp = newRank[idx-1]; newRank[idx-1] = newRank[idx]; newRank[idx] = temp; setAnswers(prev => ({ ...prev, ranking: newRank })); }}
+                      style={{ background: 'none', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '2px 8px', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}>▲</button>
+                    <button 
+                      disabled={idx === answers.ranking.length - 1} 
+                      onClick={(e) => { e.stopPropagation(); const newRank = [...answers.ranking]; const temp = newRank[idx+1]; newRank[idx+1] = newRank[idx]; newRank[idx] = temp; setAnswers(prev => ({ ...prev, ranking: newRank })); }}
+                      style={{ background: 'none', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '2px 8px', cursor: idx === answers.ranking.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === answers.ranking.length - 1 ? 0.3 : 1 }}>▼</button>
                   </div>
                 </div>
               ))}
@@ -680,10 +690,10 @@ function Success() {
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      await downloadScheduleAsPDF('weekly-calendar-capture', `AdNU_Schedule_Option_${activeScheduleIndex + 1}.pdf`);
+      await downloadScheduleAsPNG('weekly-calendar-capture', `AdNU_Schedule_Option_${activeScheduleIndex + 1}.png`);
     } catch (err) {
       console.error(err);
-      alert('Failed to generate PDF. Please try again.');
+      alert('Failed to generate Image. Please try again.');
     } finally {
       setIsDownloading(false);
     }
@@ -1014,8 +1024,8 @@ function Success() {
           )}
 
           {/* Header with timestamp and button */}
-          <div style={{ marginBottom: '2rem', position: 'relative' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <div className="offerings-header-container">
+            <div className="offerings-header-content">
               <img 
                 src="/adnu_seal.png" 
                 alt="Ateneo de Naga University Seal" 
@@ -1031,7 +1041,7 @@ function Success() {
               </div>
             </div>
             
-            <div style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'flex-end' }}>
+            <div className="offerings-header-actions">
               <button 
                 onClick={() => window.location.href = '/kaizen'}
                 className="login-btn"
@@ -1067,9 +1077,10 @@ function Success() {
                 Log out
               </button>
             </div>
+          </div>
             
-            {/* Search Bar */}
-            <div style={{ position: 'relative', marginTop: '1.5rem', marginBottom: '1rem' }}>
+          {/* Search Bar */}
+          <div style={{ position: 'relative', marginTop: '1.5rem', marginBottom: '1rem' }}>
               <input 
                 type="text" 
                 placeholder="Search by subject code (e.g. COMP) or subject name..."
@@ -1097,7 +1108,6 @@ function Success() {
                 🔍
               </span>
             </div>
-          </div>
 
           {/* Main Layout: Conditional based on viewMode */}
           {viewMode === 'results' ? (
@@ -1117,15 +1127,15 @@ function Success() {
                       gap: '0.5rem'
                     }}
                   >
-                    {isDownloading ? '⏳ Generating...' : '📥 Download PDF'}
+                    {isDownloading ? '⏳ Generating...' : '📥 Download PNG'}
                   </button>
                   <button onClick={() => setViewMode('offerings')} className="page-btn" style={{ background: '#1e293b', color: '#ffffff' }}>Back to Offerings</button>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', padding: '1rem', background: '#f8fafc', borderRadius: '16px' }}>
+              <div className="main-offerings-layout">
                 {/* AI Advisor - Outside the schedule container */}
-                <div style={{ width: '350px', position: 'sticky', top: '2rem' }}>
+                <div className="sidebar-layout" style={{ top: '2rem' }}>
                   <ScheduleAIAdvisor 
                     schedule={generatedSchedules[activeScheduleIndex]} 
                     preferences={userPreferences} 
@@ -1205,7 +1215,7 @@ function Success() {
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+            <div className="main-offerings-layout">
               {/* Left: Table and Pagination */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
@@ -1267,7 +1277,7 @@ function Success() {
 
 
             {/* Right: Sidebar - Only show in offerings mode */}
-            <div style={{ width: '360px', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'sticky', top: '2rem' }}>
+            <div className="sidebar-layout">
               {/* Sidebar Header Container */}
               <div style={{ 
                 background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
@@ -1411,10 +1421,10 @@ function Kaizen() {
   const handleDownload = async (index) => {
     setIsDownloading(index);
     try {
-      await downloadScheduleAsPDF(`kaizen-schedule-${index}`, `AdNU_Kaizen_Option_${index + 1}.pdf`);
+      await downloadScheduleAsPNG(`kaizen-schedule-${index}`, `AdNU_Kaizen_Option_${index + 1}.png`);
     } catch (err) {
       console.error(err);
-      alert('Failed to generate PDF.');
+      alert('Failed to generate Image.');
     } finally {
       setIsDownloading(null);
     }
@@ -1664,7 +1674,7 @@ function Kaizen() {
                     zIndex: 10
                   }}
                 >
-                  {isDownloading === idx ? '⏳' : '📥 PDF'}
+                  {isDownloading === idx ? '⏳' : '📥 PNG'}
                 </button>
                 {idx === 0 && (
                   <div style={{ 

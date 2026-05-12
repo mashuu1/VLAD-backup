@@ -158,13 +158,13 @@ app.post('/api/sync-gbox', async (req, res) => {
         console.log(`[Phase 2] Launching internal Playwright Engine for ${email}...`);
         
         // Launch Playwright with the new headless mode for better performance on Windows
-        const browser = await chromium.launch({ headless: 'new' });
+        const browser = await chromium.launch({ headless: true });
         const context = await browser.newContext();
         const page = await context.newPage(); // This is the FIRST Tab
 
         // Navigate directly to the MyAdNU Login URL
         console.log(`[Phase 2] Navigating to MyAdNU Portal: ${GOOGLE_LOGIN_URL}`);
-        await page.goto(GOOGLE_LOGIN_URL, { waitUntil: 'load' });
+        await page.goto(GOOGLE_LOGIN_URL, { waitUntil: 'domcontentloaded' });
 
         console.log(`[Phase 2] Automatically clicking the MyAdNU 'Sign In with Google' button...`);
         await page.click('a.btn-danger.btn-block');
@@ -179,7 +179,7 @@ app.post('/api/sync-gbox', async (req, res) => {
         // Wait for the password field, type the password, and press Enter
         console.log(`[Phase 2] Waiting for password field...`);
         // Use state: visible because the password input is physically on the page but often hidden until transition
-        await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 15000 });
+        await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 30000 });
         
         // Add a tiny delay to appear more natural and ensure transition is complete
         await page.waitForTimeout(1000);
@@ -200,7 +200,7 @@ app.post('/api/sync-gbox', async (req, res) => {
 
         console.log(`[Phase 3] Opening a NEW TAB directly to Course Offerings...`);
         const offeringsPage = await context.newPage();
-        await offeringsPage.goto('https://services.adnu.edu.ph/myadnu/index.php/offerings', { waitUntil: 'load' });
+        await offeringsPage.goto('https://services.adnu.edu.ph/myadnu/index.php/offerings', { waitUntil: 'domcontentloaded' });
         
         console.log(`[Phase 3] Closing the FIRST MyAdNU tab to clean up the workspace...`);
         await page.close();
@@ -424,7 +424,7 @@ async function triggerScrape() {
     try {
         // 1. Setup the main page (Tab 1)
         console.log('[Scraper] Navigating to offerings page (Tab 1)...');
-        await activeOfferingsPage.goto('https://services.adnu.edu.ph/myadnu/index.php/offerings', { waitUntil: 'load' });
+        await activeOfferingsPage.goto('https://services.adnu.edu.ph/myadnu/index.php/offerings', { waitUntil: 'domcontentloaded' });
         const offeringsUrl = activeOfferingsPage.url();
 
         // 2. Open duplicate tabs (Tab 2 and Tab 3)
@@ -434,8 +434,8 @@ async function triggerScrape() {
         
         console.log('[Scraper] Opening concurrent tabs (Tab 2 & Tab 3)...');
         await Promise.all([
-            tab2.goto(offeringsUrl, { waitUntil: 'load' }),
-            tab3.goto(offeringsUrl, { waitUntil: 'load' })
+            tab2.goto(offeringsUrl, { waitUntil: 'domcontentloaded' }),
+            tab3.goto(offeringsUrl, { waitUntil: 'domcontentloaded' })
         ]);
 
         // 3. Optimize all tabs (All Subjects + 100 per page)
@@ -678,59 +678,149 @@ app.post('/api/kaizen/start', async (req, res) => {
     (async () => {
         try {
             // === PHASE 1: Authenticate into College Portal ===
-            console.log('[KAIZEN Phase 1] Launching browser for Manual Login...');
-            // Launch with args to force focus
-            // NOTE: This MUST stay headless: false because it requires manual user login
+            console.log(`[KAIZEN Phase 1] Launching automated browser for ${storedCredentials.email}...`);
+            
+            // Run with headless: false to physically monitor the automated flow
             const browser = await chromium.launch({ 
                 headless: false,
-                args: [
-                    '--start-maximized', 
-                    '--no-sandbox', 
-                    '--disable-setuid-sandbox',
-                    '--window-position=0,0'
-                ] 
+                args: ['--no-sandbox', '--disable-setuid-sandbox'] 
             });
-            const context = await browser.newContext({
-                viewport: null // Required for start-maximized to work correctly
-            });
+            const context = await browser.newContext();
             const page = await context.newPage();
             
-            console.log('[KAIZEN Phase 1] Browser launched. Bringing to front...');
-            await page.bringToFront();
-            
-            // 1. MANUAL LOGIN MODE
-            console.log('[KAIZEN Phase 1] Manual Login Mode! Please log in in the opened browser window...');
-            console.log(`[KAIZEN Phase 1] Waiting for user to reach: https://services.adnu.edu.ph/college/home`);
-            
-            await page.goto(COLLEGE_URL, { waitUntil: 'load', timeout: 30000 });
-            
-            // Trigger a browser-level alert to grab attention (optional, but very effective)
-            await page.evaluate(() => {
-                const div = document.createElement('div');
-                div.style.position = 'fixed';
-                div.style.top = '0';
-                div.style.left = '0';
-                div.style.width = '100%';
-                div.style.background = '#007bff';
-                div.style.color = 'white';
-                div.style.textAlign = 'center';
-                div.style.padding = '15px';
-                div.style.zIndex = '999999';
-                div.style.fontSize = '20px';
-                div.style.fontWeight = 'bold';
-                div.innerText = '⚠️ ACTION REQUIRED: Please log in here to start scraping!';
-                document.body.appendChild(div);
-            });
+            // --- SESSION RIDE STRATEGY ---
+            // 1. Establish a global Google SSO session using the robust MyAdNU login portal
+            console.log(`[KAIZEN Phase 1] Establishing Global SSO Session via MyAdNU...`);
+            await page.goto('https://services.adnu.edu.ph/myadnu/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await page.click('a.btn-danger.btn-block');
 
-            // We wait up to 10 minutes for the user to finish logging in
-            try {
-                await page.waitForURL('**/college/home', { timeout: 600000 });
-                console.log('[KAIZEN Phase 1] Manual login detected! Reached Home Page.');
-            } catch (err) {
-                throw new Error('Manual login timed out or /home was not reached.');
-            }
+            // Enter Google credentials
+            await page.waitForSelector('input[type="email"]', { timeout: 15000 });
+            await page.fill('input[type="email"]', storedCredentials.email);
+            await page.keyboard.press('Enter');
+
+            await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 30000 });
+            await page.waitForTimeout(1000);
+            await page.fill('input[type="password"]', storedCredentials.password);
+            await page.keyboard.press('Enter');
+
+            console.log(`[KAIZEN Phase 1] Waiting for MyAdNU login success...`);
+            await page.waitForURL('**/myadnu/index.php/home', { timeout: 60000 });
             
-            await page.waitForTimeout(2000);
+            // 2. Navigate to Kaizen Homepage & use POPUP INTERCEPTION strategy
+            console.log(`[KAIZEN Phase 1] SSO Session Active! Navigating to Kaizen Homepage...`);
+            
+            await page.goto(COLLEGE_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await page.waitForLoadState('networkidle').catch(() => {});
+            await page.waitForTimeout(3000); // Let Google's GSI script fully initialize
+
+            console.log('[KAIZEN Phase 1] Page loaded. Setting up popup trap and clicking Sign-In...');
+            
+            // Set up the popup trap BEFORE clicking. When the Google iframe button is clicked,
+            // it opens a popup window. Playwright catches it at the browser level.
+            const popupPromise = page.waitForEvent('popup', { timeout: 30000 }).catch(() => null);
+            
+            let clickSucceeded = false;
+
+            // 1. Ensure the accordion is actually open. 
+            // We check if #divSignIn_2 has the 'in' class.
+            try {
+                const isAccordionOpen = await page.evaluate(() => {
+                    const panel = document.querySelector('#divSignIn_2');
+                    return panel && panel.classList.contains('in');
+                });
+                
+                if (!isAccordionOpen) {
+                    console.log('[KAIZEN Phase 1] Google Sign-In accordion appears closed. Opening it...');
+                    await page.click('a[href="#divSignIn_2"]', { force: true, timeout: 3000 });
+                    await page.waitForTimeout(2000);
+                } else {
+                    console.log('[KAIZEN Phase 1] Google Sign-In accordion is already open.');
+                }
+            } catch(e) {
+                console.log('[KAIZEN Phase 1] Could not determine accordion state.');
+            }
+
+            // 2. Scroll the button into view
+            try {
+                await page.evaluate(() => {
+                    const btn = document.querySelector('.g_id_signin');
+                    if (btn) btn.scrollIntoView({ behavior: 'instant', block: 'center' });
+                });
+                await page.waitForTimeout(1000);
+            } catch (e) {}
+
+            // 3. Click the Google Sign-In button
+            // The GSI button is rendered as HTML inside .g_id_signin, not necessarily inside an iframe
+            try {
+                console.log('[KAIZEN Phase 1] Attempting to click the HTML GSI button...');
+                await page.click('.g_id_signin div[role="button"]', { force: true, timeout: 5000 });
+                clickSucceeded = true;
+                console.log('[KAIZEN Phase 1] Clicked Google Sign-In HTML button!');
+            } catch(e) {
+                console.log('[KAIZEN Phase 1] HTML button click failed. Trying fallback...');
+            }
+
+            // 4. Fallback: Direct click on .g_id_signin
+            if (!clickSucceeded) {
+                try {
+                    await page.click('.g_id_signin', { force: true, timeout: 5000 });
+                    clickSucceeded = true;
+                    console.log('[KAIZEN Phase 1] Clicked .g_id_signin directly!');
+                } catch(e) {
+                    console.log('[KAIZEN Phase 1] Direct .g_id_signin click also failed.');
+                }
+            }
+
+            // Wait for the popup window to appear
+            const popup = await popupPromise;
+            
+            if (popup) {
+                console.log(`[KAIZEN Phase 1] Popup intercepted! URL: ${popup.url().substring(0, 100)}...`);
+                
+                // DO NOT close the popup. Google Identity Services relies on postMessage from the popup
+                // to the parent window. If we close it and redirect the parent, the flow breaks.
+                console.log('[KAIZEN Phase 1] Interacting with the popup directly...');
+                
+                try {
+                    await popup.waitForLoadState('domcontentloaded');
+                    
+                    const currentUrl = popup.url();
+                    if (currentUrl.includes('accounts.google.com')) {
+                        console.log('[KAIZEN Phase 1] Account Chooser in popup. Selecting GBox profile...');
+                        try {
+                            await popup.waitForSelector('text=/@gbox\\.adnu\\.edu\\.ph/i', { timeout: 10000 });
+                            await popup.click('text=/@gbox\\.adnu\\.edu\\.ph/i');
+                            console.log('[KAIZEN Phase 1] Clicked GBox profile in popup!');
+                        } catch(e) {
+                            try {
+                                await popup.click('div[data-identifier]', { timeout: 5000 });
+                                console.log('[KAIZEN Phase 1] Clicked default account profile in popup!');
+                            } catch(e2) {
+                                console.log('[KAIZEN Phase 1] Could not find any account to click in popup.');
+                            }
+                        }
+                    } else {
+                        console.log(`[KAIZEN Phase 1] Popup is at URL: ${currentUrl.substring(0, 80)}`);
+                    }
+                    
+                    console.log('[KAIZEN Phase 1] Waiting for Google Sign-In to complete and popup to close automatically...');
+                } catch(err) {
+                    console.log('[KAIZEN Phase 1] Error interacting with popup:', err.message);
+                }
+            } else {
+                console.log('[KAIZEN Phase 1] No popup appeared. Checking if already redirected...');
+            }
+
+            console.log('[KAIZEN Phase 1] Waiting for final Kaizen Home redirect...');
+            try {
+                await page.waitForURL('**/college/home', { timeout: 45000 });
+                console.log('[KAIZEN Phase 1] Automated login successful! Reached Home Page.');
+            } catch (err) {
+                throw new Error(`Automated login timed out. Main page URL is currently: ${page.url()}`);
+            }
+
+
             console.log('[KAIZEN Phase 1] Proceeding to automated scraping...');
             
             await page.waitForTimeout(2000);
@@ -741,7 +831,7 @@ app.post('/api/kaizen/start', async (req, res) => {
             // === PHASE 2: Scrape Advisement ===
             kaizenState.status = 'scraping_advisement';
             console.log('[KAIZEN Phase 2] Navigating to Advisement page...');
-            await page.goto('https://services.adnu.edu.ph/college/student/advisement', { waitUntil: 'load', timeout: 30000 });
+            await page.goto('https://services.adnu.edu.ph/college/student/advisement', { waitUntil: 'domcontentloaded', timeout: 30000 });
             await page.waitForTimeout(2000);
 
             // Scrape the advised subject codes
@@ -791,7 +881,7 @@ app.post('/api/kaizen/start', async (req, res) => {
             // === PHASE 3: Scrape Curriculum (Electives) ===
             kaizenState.status = 'scraping_curriculum';
             console.log('[KAIZEN Phase 3] Navigating to Curriculum page...');
-            await page.goto('https://services.adnu.edu.ph/college/student/curriculum', { waitUntil: 'load', timeout: 30000 });
+            await page.goto('https://services.adnu.edu.ph/college/student/curriculum', { waitUntil: 'domcontentloaded', timeout: 30000 });
             await page.waitForTimeout(2000);
 
             console.log('[KAIZEN Phase 3] Searching for specifically the "Options for Elective Subjects" table...');
