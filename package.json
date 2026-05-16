@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev:server\"",
     "dev:client": "npm run dev --prefix client",
-    "dev:server": "cd server && node index.js"
+    "dev:server": "cd server && node index.js",
+    "build": "npm run build --prefix client"
   },
   "dependencies": {
     "react-router-dom": "^7.14.2"
