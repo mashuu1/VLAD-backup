@@ -164,14 +164,14 @@ app.post('/api/sync-gbox', async (req, res) => {
 
         // Navigate directly to the MyAdNU Login URL
         console.log(`[Phase 2] Navigating to MyAdNU Portal: ${GOOGLE_LOGIN_URL}`);
-        await page.goto(GOOGLE_LOGIN_URL, { waitUntil: 'domcontentloaded' });
+        await page.goto(GOOGLE_LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 300000 });
 
         console.log(`[Phase 2] Automatically clicking the MyAdNU 'Sign In with Google' button...`);
         await page.click('a.btn-danger.btn-block');
 
         // Wait for the email field, type the Gbox email, and press Enter
         console.log(`[Phase 2] Waiting for email field...`);
-        await page.waitForSelector('input[type="email"]');
+        await page.waitForSelector('input[type="email"]', { timeout: 300000 });
         await page.fill('input[type="email"]', email);
         console.log(`[Phase 2] Typing email and pressing enter.`);
         await page.keyboard.press('Enter');
@@ -179,20 +179,31 @@ app.post('/api/sync-gbox', async (req, res) => {
         // Wait for the password field, type the password, and press Enter
         console.log(`[Phase 2] Waiting for password field...`);
         // Use state: visible because the password input is physically on the page but often hidden until transition
-        await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 30000 });
+        await page.waitForSelector('input[type="password"][jsname="YPqjbf"], input[type="password"][name="Passwd"]', { state: 'visible', timeout: 300000 }).catch(async () => {
+            // Fallback: wait for ANY visible password field
+            await page.waitForSelector('input[type="password"]:not([aria-hidden="true"])', { state: 'visible', timeout: 300000 });
+        });
         
         // Add a tiny delay to appear more natural and ensure transition is complete
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(1500);
         
         console.log(`[Phase 2] Typing password and pressing enter.`);
-        await page.fill('input[type="password"]', password);
+        // Use the visible password field specifically
+        const pwField = await page.$('input[type="password"][jsname="YPqjbf"]') || 
+                         await page.$('input[type="password"][name="Passwd"]') ||
+                         await page.$('input[type="password"]:not([aria-hidden="true"])');
+        if (pwField) {
+            await pwField.fill(password);
+        } else {
+            await page.fill('input[type="password"]', password);
+        }
         await page.keyboard.press('Enter');
 
         console.log(`[Phase 3] Waiting for Google login to redirect back to services.adnu.edu.ph...`);
         // Wait for the URL to change indicating success (we specifically wait for the home dashboard!)
         await page.waitForFunction(() => {
             return window.location.href.includes('myadnu/index.php/home');
-        }, { timeout: 60000 });
+        }, { timeout: 300000 });
         console.log(`[Phase 3] Google Handshake completed! Landed heavily on HOME Dashboard.`);
         console.log(`[Phase 3] Waiting for SSO to fully resolve and log in...`);
         // We add a tiny network delay here to ensure MyAdNU successfully recognizes the session cookies
@@ -691,26 +702,26 @@ app.post('/api/kaizen/start', async (req, res) => {
             // --- SESSION RIDE STRATEGY ---
             // 1. Establish a global Google SSO session using the robust MyAdNU login portal
             console.log(`[KAIZEN Phase 1] Establishing Global SSO Session via MyAdNU...`);
-            await page.goto('https://services.adnu.edu.ph/myadnu/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await page.goto('https://services.adnu.edu.ph/myadnu/', { waitUntil: 'domcontentloaded', timeout: 300000 });
             await page.click('a.btn-danger.btn-block');
 
             // Enter Google credentials
-            await page.waitForSelector('input[type="email"]', { timeout: 15000 });
+            await page.waitForSelector('input[type="email"]', { timeout: 300000 });
             await page.fill('input[type="email"]', storedCredentials.email);
             await page.keyboard.press('Enter');
 
-            await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 30000 });
+            await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 300000 });
             await page.waitForTimeout(1000);
             await page.fill('input[type="password"]', storedCredentials.password);
             await page.keyboard.press('Enter');
 
             console.log(`[KAIZEN Phase 1] Waiting for MyAdNU login success...`);
-            await page.waitForURL('**/myadnu/index.php/home', { timeout: 60000 });
+            await page.waitForURL('**/myadnu/index.php/home', { timeout: 300000 });
             
             // 2. Navigate to Kaizen Homepage & use POPUP INTERCEPTION strategy
             console.log(`[KAIZEN Phase 1] SSO Session Active! Navigating to Kaizen Homepage...`);
             
-            await page.goto(COLLEGE_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await page.goto(COLLEGE_URL, { waitUntil: 'domcontentloaded', timeout: 300000 });
             await page.waitForLoadState('networkidle').catch(() => {});
             await page.waitForTimeout(3000); // Let Google's GSI script fully initialize
 
@@ -718,7 +729,7 @@ app.post('/api/kaizen/start', async (req, res) => {
             
             // Set up the popup trap BEFORE clicking. When the Google iframe button is clicked,
             // it opens a popup window. Playwright catches it at the browser level.
-            const popupPromise = page.waitForEvent('popup', { timeout: 30000 }).catch(() => null);
+            const popupPromise = page.waitForEvent('popup', { timeout: 300000 }).catch(() => null);
             
             let clickSucceeded = false;
 

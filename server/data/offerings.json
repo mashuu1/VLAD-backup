@@ -5580,6 +5580,16 @@
     "open_slots": "5"
   },
   {
+    "course_code": "CRCP300",
+    "title": "College Reading Program Bridging Class",
+    "units": 0,
+    "section": "N89Af",
+    "schedule_raw": "M-F 08:00AM - 06:00PM",
+    "room": "---",
+    "instructor": "TBA",
+    "open_slots": "20"
+  },
+  {
     "course_code": "CSDC100",
     "title": "Introduction to Computing",
     "units": 3,
@@ -9201,7 +9211,7 @@
   },
   {
     "course_code": "GEMT103",
-    "title": "Differential Equations",
+    "title": "Differential & Integral Calculus",
     "units": 3,
     "section": "KT11Am",
     "schedule_raw": "MW 03:00PM - 04:30PM",

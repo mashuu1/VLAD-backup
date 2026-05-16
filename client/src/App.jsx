@@ -1043,7 +1043,7 @@ function Success() {
             
             <div className="offerings-header-actions">
               <button 
-                onClick={() => window.location.href = '/kaizen'}
+                onClick={() => window.location.href = '/vlad'}
                 className="login-btn"
                 style={{ 
                   marginTop: 0, 
@@ -1421,7 +1421,7 @@ function Kaizen() {
   const handleDownload = async (index) => {
     setIsDownloading(index);
     try {
-      await downloadScheduleAsPNG(`kaizen-schedule-${index}`, `AdNU_Kaizen_Option_${index + 1}.png`);
+      await downloadScheduleAsPNG(`vlad-schedule-${index}`, `AdNU_VLAD_Option_${index + 1}.png`);
     } catch (err) {
       console.error(err);
       alert('Failed to generate Image.');
@@ -1574,11 +1574,7 @@ function Kaizen() {
 
   useEffect(() => {
     const initKaizen = async () => {
-      const hasData = await fetchKaizenData();
-      if (!hasData && !isManual) {
-        console.log('[KAIZEN] No data found, auto-starting sync...');
-        startKaizen();
-      }
+      await fetchKaizenData();
     };
     initKaizen();
   }, [isManual]);
@@ -1616,7 +1612,7 @@ function Kaizen() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>KAIZEN</h1>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>VLAD</h1>
           <p style={{ color: '#64748b', margin: '0.5rem 0' }}>
             {lastScrapeTime ? `Your advisement as of ${formatScrapeTime(lastScrapeTime)}` : 'The Intelligent Schedule Architect'}
           </p>
@@ -1657,7 +1653,7 @@ function Kaizen() {
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem' }}>
             {generatedSchedules.map((res, idx) => (
-              <div key={idx} id={`kaizen-schedule-${idx}`} className="portal-card" style={{ 
+              <div key={idx} id={`vlad-schedule-${idx}`} className="portal-card" style={{ 
                 background: '#ffffff', padding: '2rem', borderRadius: '20px', 
                 border: idx === 0 ? '2px solid #2563eb' : '1px solid #1e293b',
                 position: 'relative', overflow: 'hidden'
@@ -1744,7 +1740,7 @@ function Kaizen() {
         <div className="portal-init">
           <div className="portal-card" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '3rem', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
             <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🏛️</div>
-            <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Initialize Student Portal</h2>
+            <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Connect to VLAD</h2>
             <p style={{ color: '#475569', maxWidth: '500px', margin: '0 auto 2rem' }}>
               We need to sync your latest advisement and curriculum data. Click below to open the secure login portal.
             </p>
@@ -1752,70 +1748,35 @@ function Kaizen() {
               <button className="login-btn" onClick={startKaizen} style={{ fontSize: '1.2rem', padding: '1.2rem', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', width: '100%' }}>
                 Open Secure Login Portal
               </button>
-              <button 
-                onClick={async () => {
-                  try {
-                    const res = await axios.post(`${API_BASE_URL}/api/kaizen/bypass`);
-                    if (res.data.status === 'done') {
-                      // Fetch the data immediately so state is updated
-                      const dataRes = await axios.get(`${API_BASE_URL}/api/kaizen/data`);
-                      setAdvisedSubjects(dataRes.data.advisedSubjects);
-                      setElectiveOptions(dataRes.data.electiveOptions);
-                      setLastScrapeTime(dataRes.data.lastScrapeTime);
-                      setKaizenStatus('done');
-                    }
-                  } catch (err) {
-                    setError('Bypass failed: No existing data found.');
-                    setKaizenStatus('error');
-                  }
-                }}
-                className="login-btn" 
-                style={{ 
-                  fontSize: '0.95rem', 
-                  padding: '0.8rem', 
-                  background: 'rgba(0, 0, 0, 0.05)', 
-                  border: '1px dashed rgba(0, 0, 0, 0.2)',
-                  color: '#475569',
-                  width: '100%'
-                }}
-              >
-                Fast-Track: Use Database / Cache
-              </button>
             </div>
           </div>
         </div>
       )}
 
       {kaizenStatus === 'authenticating' && (
-        <div className="portal-active" style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <div className="pulse-container" style={{ position: 'relative', width: '200px', height: '200px', margin: '0 auto 2rem' }}>
-            <div className="pulse-ring"></div>
-            <div className="portal-icon" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '5rem' }}>🌐</div>
+        <div className="portal-active" style={{ textAlign: 'center', padding: '8rem 0', animation: 'fadeIn 0.5s ease-out' }}>
+          <div className="minimal-loader" style={{ marginBottom: '2rem' }}>
+            <div className="spinner" style={{ width: '60px', height: '60px', border: '3px solid rgba(37, 99, 235, 0.1)', borderTop: '3px solid #2563eb', margin: '0 auto' }}></div>
           </div>
-          <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Portal Connection Active</h2>
-          <p style={{ color: '#475569', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto' }}>
-            Please log in to the **College Portal** window that just opened. 
-            The system is watching for your successful login to start the scrape.
-          </p>
-          <div style={{ marginTop: '2rem', padding: '1rem', background: '#ffffff', borderRadius: '12px', display: 'inline-block', border: '1px solid #e2e8f0' }}>
-            <span style={{ color: '#2563eb', fontWeight: 'bold' }}>STATUS:</span> {statusDescriptions[kaizenStatus]}
-          </div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1e293b', letterSpacing: '-0.025em' }}>
+            Connecting your KAIZEN to VLAD please wait.
+          </h2>
         </div>
       )}
 
       {(kaizenStatus === 'scraping_advisement' || kaizenStatus === 'scraping_curriculum') && (
-        <div className="scraping-active" style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <div className="loader-orbit" style={{ margin: '0 auto 3rem' }}>
-            <div className="orbit-ring"></div>
-            <div className="orbit-planet"></div>
-            <div className="orbit-core">K</div>
+        <div className="scraping-active" style={{ textAlign: 'center', padding: '8rem 0', animation: 'fadeIn 0.5s ease-out' }}>
+          <div className="minimal-loader" style={{ marginBottom: '2rem' }}>
+            <div className="spinner" style={{ width: '60px', height: '60px', border: '3px solid rgba(37, 99, 235, 0.1)', borderTop: '3px solid #2563eb', margin: '0 auto' }}></div>
           </div>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.5rem', letterSpacing: '-1px' }}>SYNCHRONIZING DATA</h2>
-          <p style={{ color: '#2563eb', fontWeight: 600, fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1e293b', letterSpacing: '-0.025em' }}>
+            Synchronizing your portal data...
+          </h2>
+          <p style={{ color: '#2563eb', fontWeight: 500, fontSize: '0.9rem', marginTop: '1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
             {statusDescriptions[kaizenStatus]}
           </p>
-          <div style={{ width: '100%', maxWidth: '400px', background: '#ffffff', height: '6px', borderRadius: '3px', margin: '2rem auto', overflow: 'hidden' }}>
-            <div className="loading-progress-bar"></div>
+          <div style={{ width: '100%', maxWidth: '300px', background: 'rgba(37, 99, 235, 0.1)', height: '4px', borderRadius: '2px', margin: '1.5rem auto', overflow: 'hidden' }}>
+            <div className="loading-progress-bar" style={{ height: '100%', background: '#2563eb' }}></div>
           </div>
         </div>
       )}
@@ -1931,7 +1892,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/success" element={<Success />} />
-        <Route path="/kaizen" element={<Kaizen />} />
+        <Route path="/vlad" element={<Kaizen />} />
       </Routes>
     </Router>
   );
