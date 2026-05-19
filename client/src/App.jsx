@@ -1255,21 +1255,7 @@ function Success() {
               >
                 Go to advisement
               </button>
-              <button 
-                onClick={() => setShowCrudModal(true)}
-                className="login-btn"
-                style={{ 
-                  marginTop: 0, 
-                  padding: '0.75rem 1.5rem', 
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
-                  whiteSpace: 'nowrap', 
-                  maxWidth: '350px', 
-                  fontSize: '0.95rem',
-                  boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
-                }}
-              >
-                🛠️ Custom Offerings
-              </button>
+
               <button 
                 onClick={() => { sessionStorage.clear(); window.location.href = '/'; }}
                 style={{ 
