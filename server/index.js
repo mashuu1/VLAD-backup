@@ -606,10 +606,14 @@ async function triggerScrape() {
             // Helper to generate a unique composite key for an offering
             const makeKey = (e) => `${(e.course_code || '').trim().toUpperCase()}|${(e.section || '').trim().toUpperCase()}|${(e.schedule_raw || '').trim().toUpperCase()}`;
 
-            // Create a map of existing DB records by key
+            // Create a map of existing DB records by key (mapped to arrays to handle duplicates/Lec-Lab splits)
             const dbMap = new Map();
             for (const item of dbOfferings) {
-                dbMap.set(makeKey(item), item);
+                const key = makeKey(item);
+                if (!dbMap.has(key)) {
+                    dbMap.set(key, []);
+                }
+                dbMap.get(key).push(item);
             }
 
             // Keep track of which DB IDs are matched, to identify which ones to delete
@@ -621,7 +625,13 @@ async function triggerScrape() {
 
             for (const e of entries) {
                 const key = makeKey(e);
-                const existing = dbMap.get(key);
+                const list = dbMap.get(key);
+
+                // Find the first matching DB record that has not been matched yet in this scrape
+                let existing = null;
+                if (list && list.length > 0) {
+                    existing = list.find(item => !matchedDbIds.has(item.id));
+                }
 
                 if (existing) {
                     matchedDbIds.add(existing.id);
