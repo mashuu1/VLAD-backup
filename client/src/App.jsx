@@ -6,6 +6,7 @@ import './index.css';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vlad-trends-backend.shares.zrok.io';
 import { getDifficulty } from './difficulty_map';
 import { downloadScheduleAsPNG } from './pdfUtils';
+import { supabase } from './supabase';
 
 
 function Login() {
@@ -960,6 +961,44 @@ function Success() {
     }
   }, [isFirstScrape, scrapeStatus]);
 
+  // Realtime listener for course offerings (Zero refresh instant sync)
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:course_offerings')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'course_offerings' },
+        (payload) => {
+          console.log('[Realtime] Database change detected:', payload);
+
+          if (payload.eventType === 'INSERT') {
+            setOfferings((prev) => {
+              // Prevent duplicate inserts
+              if (prev.some(o => o.id === payload.new.id)) return prev;
+              return [...prev, payload.new];
+            });
+            if (payload.new.last_updated) {
+              setLastScrapeTime(payload.new.last_updated);
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            setOfferings((prev) =>
+              prev.map((item) => (item.id === payload.new.id ? payload.new : item))
+            );
+            if (payload.new.last_updated) {
+              setLastScrapeTime(payload.new.last_updated);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setOfferings((prev) => prev.filter((item) => item.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // Use sessionStorage to track if we have already seen a 'done' status in this browser session
   // This ensures that navigating back and forth between tabs doesn't re-trigger the loading screen
   const initialDoneKey = 'vlad_initial_scrape_done';
@@ -1660,6 +1699,43 @@ function Kaizen() {
   const navigate = useNavigate();
   const [userPreferences, setUserPreferences] = useState(null);
   const [isDownloading, setIsDownloading] = useState(null);
+
+  // Realtime listener for course offerings in Kaizen Advisement page (Zero refresh instant sync)
+  useEffect(() => {
+    const channel = supabase
+      .channel('kaizen:course_offerings')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'course_offerings' },
+        (payload) => {
+          console.log('[Realtime-Kaizen] Database change detected:', payload);
+
+          if (payload.eventType === 'INSERT') {
+            setOfferings((prev) => {
+              if (prev.some(o => o.id === payload.new.id)) return prev;
+              return [...prev, payload.new];
+            });
+            if (payload.new.last_updated) {
+              setLastScrapeTime(payload.new.last_updated);
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            setOfferings((prev) =>
+              prev.map((item) => (item.id === payload.new.id ? payload.new : item))
+            );
+            if (payload.new.last_updated) {
+              setLastScrapeTime(payload.new.last_updated);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setOfferings((prev) => prev.filter((item) => item.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleDownload = async (index) => {
     setIsDownloading(index);
