@@ -13,25 +13,59 @@ function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('Initializing...');
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setStatusMessage('Initiating connection with backend...');
+    
+    let pollInterval = null;
+
     try {
       // Send a POST request to the backend with the user's Gbox email/pass.
       const res = await axios.post(`${API_BASE_URL}/api/sync-gbox`, { email, password });
-      if (res.status === 200) {
+      
+      // If the backend initiates background authentication (202 Accepted)
+      if (res.status === 202) {
+        pollInterval = setInterval(async () => {
+          try {
+            const statusRes = await axios.get(`${API_BASE_URL}/api/sync-gbox/status`);
+            const { status, step, error } = statusRes.data;
+            
+            if (status === 'running') {
+              setStatusMessage(step || 'Processing authentication...');
+            } else if (status === 'success') {
+              clearInterval(pollInterval);
+              sessionStorage.removeItem('vlad_initial_scrape_done');
+              navigate('/success');
+            } else if (status === 'error') {
+              clearInterval(pollInterval);
+              setLoading(false);
+              alert(`Authentication failed: ${error || 'Unknown error occurred.'}`);
+            }
+          } catch (pollErr) {
+            console.error('Error polling login status:', pollErr);
+            // Gracefully warn the user instead of crashing on a brief network fluctuation
+            setStatusMessage('Network hiccup, retrying handshake...');
+          }
+        }, 1500);
+      } else if (res.status === 200) {
+        // Fallback for direct synchronous response
         sessionStorage.removeItem('vlad_initial_scrape_done');
         navigate('/success');
       }
     } catch (err) {
       console.error(err);
-      // Wait for 2 seconds to simulate handshake then alert for testing phase 1 when backend is off
+      if (pollInterval) clearInterval(pollInterval);
+      
       setTimeout(() => {
         setLoading(false);
-        if (err.message.includes('Network Error')) {
+        if (err.message && err.message.includes('Network Error')) {
           alert('Phase 1 is complete! Backend is not connected yet, tell me to proceed to Phase 2.');
+        } else {
+          alert(`Login request failed: ${err.response?.data?.error || err.message}`);
         }
       }, 2000);
     }
@@ -92,6 +126,16 @@ function Login() {
         <div className="overlay">
           <div className="spinner"></div>
           <h3>Handshake in progress...</h3>
+          <p style={{
+            color: '#cbd5e1',
+            fontSize: '0.9rem',
+            marginTop: '0.8rem',
+            fontWeight: '500',
+            textAlign: 'center',
+            maxWidth: '85%'
+          }}>
+            {statusMessage}
+          </p>
         </div>
       )}
     </div>

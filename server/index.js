@@ -92,6 +92,12 @@ let kaizenState = {
     lastScrapeTime: null,
 };
 
+let handshakeState = {
+    status: 'idle', // 'idle' | 'running' | 'success' | 'error'
+    step: '',
+    error: null
+};
+
 // Persistence Layer removed per user request for fresh debug state on restart
 
 // =============================================
@@ -189,90 +195,122 @@ app.post('/api/sync-gbox', async (req, res) => {
         return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    if (handshakeState.status === 'running') {
+        return res.status(409).json({ error: 'Another login handshake is currently in progress.' });
+    }
+
     // Store credentials for KAIZEN reuse
     storedCredentials = { email, password };
 
-    try {
-        console.log(`[Phase 2] Launching internal Playwright Engine for ${email}...`);
-        
-        // Launch Playwright with the new headless mode for better performance on Windows
-        const browser = await chromium.launch({ headless: HEADLESS });
-        const context = await browser.newContext();
-        const page = await context.newPage(); // This is the FIRST Tab
+    // Initialize handshake state
+    handshakeState = {
+        status: 'running',
+        step: 'Launching automation engine...',
+        error: null
+    };
 
-        // Navigate directly to the MyAdNU Login URL
-        console.log(`[Phase 2] Navigating to MyAdNU Portal: ${GOOGLE_LOGIN_URL}`);
-        await page.goto(GOOGLE_LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 300000 });
+    // Respond immediately to client to prevent gateway timeouts
+    res.status(202).json({ message: 'Handshake initiated successfully' });
 
-        console.log(`[Phase 2] Automatically clicking the MyAdNU 'Sign In with Google' button...`);
-        await page.click('a.btn-danger.btn-block');
+    // Begin background auth
+    (async () => {
+        try {
+            console.log(`[Phase 2] Launching internal Playwright Engine for ${email}...`);
+            
+            // Launch Playwright with the new headless mode for better performance on Windows
+            const browser = await chromium.launch({ headless: HEADLESS });
+            const context = await browser.newContext();
+            const page = await context.newPage(); // This is the FIRST Tab
 
-        // Wait for the email field, type the Gbox email, and press Enter
-        console.log(`[Phase 2] Waiting for email field...`);
-        await page.waitForSelector('input[type="email"]', { timeout: 300000 });
-        await page.fill('input[type="email"]', email);
-        console.log(`[Phase 2] Typing email and pressing enter.`);
-        await page.keyboard.press('Enter');
+            // Navigate directly to the MyAdNU Login URL
+            handshakeState.step = 'Navigating to MyAdNU Portal...';
+            console.log(`[Phase 2] Navigating to MyAdNU Portal: ${GOOGLE_LOGIN_URL}`);
+            await page.goto(GOOGLE_LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 300000 });
 
-        // Wait for the password field, type the password, and press Enter
-        console.log(`[Phase 2] Waiting for password field...`);
-        // Use state: visible because the password input is physically on the page but often hidden until transition
-        await page.waitForSelector('input[type="password"][jsname="YPqjbf"], input[type="password"][name="Passwd"]', { state: 'visible', timeout: 300000 }).catch(async () => {
-            // Fallback: wait for ANY visible password field
-            await page.waitForSelector('input[type="password"]:not([aria-hidden="true"])', { state: 'visible', timeout: 300000 });
-        });
-        
-        // Add a tiny delay to appear more natural and ensure transition is complete
-        await page.waitForTimeout(1500);
-        
-        console.log(`[Phase 2] Typing password and pressing enter.`);
-        // Use the visible password field specifically
-        const pwField = await page.$('input[type="password"][jsname="YPqjbf"]') || 
-                         await page.$('input[type="password"][name="Passwd"]') ||
-                         await page.$('input[type="password"]:not([aria-hidden="true"])');
-        if (pwField) {
-            await pwField.fill(password);
-        } else {
-            await page.fill('input[type="password"]', password);
+            handshakeState.step = 'Clicking Google Sign-In button...';
+            console.log(`[Phase 2] Automatically clicking the MyAdNU 'Sign In with Google' button...`);
+            await page.click('a.btn-danger.btn-block');
+
+            // Wait for the email field, type the Gbox email, and press Enter
+            handshakeState.step = 'Waiting for Google Email Prompt...';
+            console.log(`[Phase 2] Waiting for email field...`);
+            await page.waitForSelector('input[type="email"]', { timeout: 300000 });
+            
+            handshakeState.step = 'Entering Gbox email...';
+            await page.fill('input[type="email"]', email);
+            console.log(`[Phase 2] Typing email and pressing enter.`);
+            await page.keyboard.press('Enter');
+
+            // Wait for the password field, type the password, and press Enter
+            handshakeState.step = 'Waiting for Google Password Prompt...';
+            console.log(`[Phase 2] Waiting for password field...`);
+            // Use state: visible because the password input is physically on the page but often hidden until transition
+            await page.waitForSelector('input[type="password"][jsname="YPqjbf"], input[type="password"][name="Passwd"]', { state: 'visible', timeout: 300000 }).catch(async () => {
+                // Fallback: wait for ANY visible password field
+                await page.waitForSelector('input[type="password"]:not([aria-hidden="true"])', { state: 'visible', timeout: 300000 });
+            });
+            
+            // Add a tiny delay to appear more natural and ensure transition is complete
+            await page.waitForTimeout(1500);
+            
+            handshakeState.step = 'Entering Gbox password...';
+            console.log(`[Phase 2] Typing password and pressing enter.`);
+            // Use the visible password field specifically
+            const pwField = await page.$('input[type="password"][jsname="YPqjbf"]') || 
+                             await page.$('input[type="password"][name="Passwd"]') ||
+                             await page.$('input[type="password"]:not([aria-hidden="true"])');
+            if (pwField) {
+                await pwField.fill(password);
+            } else {
+                await page.fill('input[type="password"]', password);
+            }
+            await page.keyboard.press('Enter');
+
+            handshakeState.step = 'Resolving Single Sign-On (SSO) authentication...';
+            console.log(`[Phase 3] Waiting for Google login to redirect back to services.adnu.edu.ph...`);
+            // Wait for the URL to change indicating success (we specifically wait for the home dashboard!)
+            await page.waitForURL('**/myadnu/index.php/home', { timeout: 300000 });
+            console.log(`[Phase 3] Google Handshake completed! Landed heavily on HOME Dashboard.`);
+            console.log(`[Phase 3] Waiting for SSO to fully resolve and log in...`);
+            // We add a tiny network delay here to ensure MyAdNU successfully recognizes the session cookies
+            await page.waitForTimeout(3000); 
+
+            handshakeState.step = 'Initializing Course Offerings page...';
+            console.log(`[Phase 3] Opening a NEW TAB directly to Course Offerings...`);
+            const offeringsPage = await context.newPage();
+            await offeringsPage.goto('https://services.adnu.edu.ph/myadnu/index.php/offerings', { waitUntil: 'domcontentloaded' });
+            
+            console.log(`[Phase 3] Closing the FIRST MyAdNU tab to clean up the workspace...`);
+            await page.close();
+            
+            console.log(`[Phase 3] Dashboard active! Sending Client Signal (200 OK) for Final Redirect.`);
+            
+            activeBrowser = browser;
+            activeOfferingsPage = offeringsPage;
+
+            handshakeState.status = 'success';
+            handshakeState.step = 'Login completed successfully!';
+
+            // Set status to scraping immediately so the frontend sees it during the redirect
+            scrapeState.status = 'scraping';
+            scrapeState.totalEntries = 0;
+            scrapeState.currentPage = 0;
+            
+            // Auto-trigger the first scrape immediately after login
+            console.log('[Auto-Scrape] Login successful. Triggering first scrape automatically...');
+            setTimeout(() => triggerScrape(), 1000);
+
+        } catch (error) {
+            console.error('[Phase 2] Automation Error:', error);
+            handshakeState.status = 'error';
+            handshakeState.error = error.message;
         }
-        await page.keyboard.press('Enter');
+    })();
+});
 
-        console.log(`[Phase 3] Waiting for Google login to redirect back to services.adnu.edu.ph...`);
-        // Wait for the URL to change indicating success (we specifically wait for the home dashboard!)
-        await page.waitForURL('**/myadnu/index.php/home', { timeout: 300000 });
-        console.log(`[Phase 3] Google Handshake completed! Landed heavily on HOME Dashboard.`);
-        console.log(`[Phase 3] Waiting for SSO to fully resolve and log in...`);
-        // We add a tiny network delay here to ensure MyAdNU successfully recognizes the session cookies
-        await page.waitForTimeout(3000); 
-
-        console.log(`[Phase 3] Opening a NEW TAB directly to Course Offerings...`);
-        const offeringsPage = await context.newPage();
-        await offeringsPage.goto('https://services.adnu.edu.ph/myadnu/index.php/offerings', { waitUntil: 'domcontentloaded' });
-        
-        console.log(`[Phase 3] Closing the FIRST MyAdNU tab to clean up the workspace...`);
-        await page.close();
-        
-        console.log(`[Phase 3] Dashboard active! Sending Client Signal (200 OK) for Final Redirect.`);
-        
-        activeBrowser = browser;
-        activeOfferingsPage = offeringsPage;
-
-        // We will purposely leave the browser OPEN so you can see it physically running.
-        res.status(200).json({ message: 'Session verified and active' });
-
-        // Set status to scraping immediately so the frontend sees it during the redirect
-        scrapeState.status = 'scraping';
-        scrapeState.totalEntries = 0;
-        scrapeState.currentPage = 0;
-        
-        // Auto-trigger the first scrape immediately after login
-        console.log('[Auto-Scrape] Login successful. Triggering first scrape automatically...');
-        setTimeout(() => triggerScrape(), 1000);
-
-    } catch (error) {
-        console.error('[Phase 2] Automation Error:', error);
-        res.status(500).json({ error: 'Automation failed: ' + error.message });
-    }
+// New endpoint to retrieve real-time handshake/login status
+app.get('/api/sync-gbox/status', (req, res) => {
+    res.json(handshakeState);
 });
 
 // Phase 3: Pagination Loop
@@ -635,6 +673,13 @@ app.post('/api/data/clean', (req, res) => {
             electiveOptions: [],
             error: null,
             lastScrapeTime: null,
+        };
+
+        // Reset in-memory handshake state
+        handshakeState = {
+            status: 'idle',
+            step: '',
+            error: null
         };
 
         console.log('[Cleanup] All data cleaned. States reset to idle.');
