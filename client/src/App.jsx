@@ -963,6 +963,7 @@ function Success() {
 
   // Realtime listener for course offerings (Zero refresh instant sync)
   useEffect(() => {
+    if (!supabase) return;
     const channel = supabase
       .channel('public:course_offerings')
       .on(
@@ -1702,6 +1703,7 @@ function Kaizen() {
 
   // Realtime listener for course offerings in Kaizen Advisement page (Zero refresh instant sync)
   useEffect(() => {
+    if (!supabase) return;
     const channel = supabase
       .channel('kaizen:course_offerings')
       .on(
