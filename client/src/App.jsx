@@ -3,163 +3,13 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import './index.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vlad-trends-backend.shares.zrok.io';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 import { getDifficulty } from './difficulty_map';
 import { downloadScheduleAsPNG } from './pdfUtils';
-import { supabase, initializeSupabaseClient } from './supabase';
+import { supabase, fetchFullTable } from './supabase';
 
 
-function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('Initializing...');
-  const navigate = useNavigate();
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setStatusMessage('Initiating connection with backend...');
-    
-    let pollInterval = null;
-
-    try {
-      // Send a POST request to the backend with the user's Gbox email/pass.
-      const res = await axios.post(`${API_BASE_URL}/api/sync-gbox`, { email, password });
-      
-      // If the backend initiates background authentication (202 Accepted)
-      if (res.status === 202) {
-        pollInterval = setInterval(async () => {
-          try {
-            const statusRes = await axios.get(`${API_BASE_URL}/api/sync-gbox/status`);
-            const { status, step, error } = statusRes.data;
-            
-            if (status === 'running') {
-              setStatusMessage(step || 'Processing authentication...');
-            } else if (status === 'success') {
-              clearInterval(pollInterval);
-              sessionStorage.removeItem('vlad_initial_scrape_done');
-              navigate('/success');
-            } else if (status === 'error') {
-              clearInterval(pollInterval);
-              setLoading(false);
-              alert(`Authentication failed: ${error || 'Unknown error occurred.'}`);
-            }
-          } catch (pollErr) {
-            console.error('Error polling login status:', pollErr);
-            // Gracefully warn the user instead of crashing on a brief network fluctuation
-            setStatusMessage('Network hiccup, retrying handshake...');
-          }
-        }, 1500);
-      } else if (res.status === 200) {
-        // Fallback for direct synchronous response
-        sessionStorage.removeItem('vlad_initial_scrape_done');
-        navigate('/success');
-      }
-    } catch (err) {
-      console.error(err);
-      if (pollInterval) clearInterval(pollInterval);
-      
-      setTimeout(() => {
-        setLoading(false);
-        if (err.message && err.message.includes('Network Error')) {
-          alert('Phase 1 is complete! Backend is not connected yet, tell me to proceed to Phase 2.');
-        } else {
-          alert(`Login request failed: ${err.response?.data?.error || err.message}`);
-        }
-      }, 2000);
-    }
-  };
-
-  return (
-    <div className="app-container">
-      <h2>VLAD</h2>
-      <form onSubmit={handleLogin}>
-        <div className="input-group">
-          <label>GBox Email</label>
-          <input 
-            type="email" 
-            placeholder="you@gbox.adnu.edu.ph"
-            required 
-            value={email} 
-            onChange={e => setEmail(e.target.value)} 
-          />
-        </div>
-        <div className="input-group">
-          <label>Password</label>
-          <div className="password-wrapper" style={{ position: 'relative' }}>
-            <input 
-              type={showPassword ? "text" : "password"} 
-              placeholder="••••••••"
-              required 
-              value={password} 
-              onChange={e => setPassword(e.target.value)} 
-              style={{ width: '100%', paddingRight: '40px' }}
-            />
-            <button 
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '1.2rem',
-                padding: '5px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#64748b'
-              }}
-            >
-              {showPassword ? '👁️' : '👁️‍🗨️'}
-            </button>
-          </div>
-        </div>
-        <button type="submit" className="login-btn">Login with Gbox</button>
-      </form>
-
-      {loading && (
-        <div className="overlay">
-          <div className="spinner"></div>
-          <h3>Handshake in progress...</h3>
-          <p style={{
-            color: '#cbd5e1',
-            fontSize: '0.9rem',
-            marginTop: '0.8rem',
-            fontWeight: '500',
-            textAlign: 'center',
-            maxWidth: '85%'
-          }}>
-            {statusMessage}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-const ADNU_TRIVIAS = [
-  "The 4 Pillars: The iconic pillars of the Burns Hall (and the high school building) symbolize the university's '4 Cs': Competence, Conscience, Compassionate Commitment to Change, and Christ-Centeredness.",
-  "The Golden Knight: AdNU is the only Ateneo school to use the Golden Knight as its mascot, representing the soldierly and chivalrous roots of Saint Ignatius of Loyola.",
-  "The First in Bicol: Established in 1940, it was the first Jesuit school in the Bicol region, originally founded as an all-boys high school.",
-  "WWII Garrison: During World War II, the Japanese army used the campus as a garrison and prison, making it a site of significant historical weight.",
-  "University Status: It officially gained university status on November 11, 1998, with Fr. Raul Bonoan, SJ, as its first University President.",
-  "Primum Regnum Dei: The university motto, which you’ll see everywhere, means 'First the Kingdom of God,' emphasizing the priority of spiritual and social missions.",
-  "The Six Stars: If you look closely at the university seal, the six stars represent the six provinces of the Bicol Region: Albay, Camarines Norte, Camarines Sur, Catanduanes, Masbate, and Sorsogon.",
-  "Animation Pioneer: AdNU is widely recognized as one of the pioneers of digital animation education in the Philippines, with its graduates often working on major international films.",
-  "The O’Brien Library: The library is named after Fr. James J. O’Brien, SJ, a legendary Jesuit who dedicated much of his life to documenting and preserving Bicolano culture and folklore.",
-"John Philip Sousa's March: The school’s 'Regnum Dei' march actually uses a melody composed by the famous American 'March King,' John Philip Sousa.",
-  "The First Co-eds: It took 13 years for the school to go co-ed; the college department admitted its first five female students in 1953.",
-  "The Church of Christ the King: This campus landmark is famous for its modern architecture and the statue of Christ that serves as a focal point for the university community.",
-  "Autonomous Excellence: In 2008, AdNU became the first university in Southern Luzon to be granted Full Autonomous Status by CHED.",
-  "Blue and Gold: Unlike the blue-and-white of Manila, AdNU uses Blue and Gold to symbolize the 'Ateneo blue' tradition combined with the excellence and chivalry of the Golden Knight.",
-  "The Alingal Hall: Named after Fr. Godofredo Alingal, SJ, this building honors a Jesuit priest who was a prominent activist for the poor and a martyr during the Martial Law period."
-];
+// Login component and ADNU_TRIVIAS removed — Supabase-only architecture (no GBox login needed)
 
 // Reusable Questionnaire Component
 // Helper to parse schedule strings for the calendar view
@@ -710,54 +560,15 @@ function SchedulerQuestionnaire({ advisedSubjects, offerings, onGenerate, onCanc
   );
 }
 
-function Success() {
+function Dashboard() {
   const [offerings, setOfferings] = useState([]);
-  
-  // Dynamic credentials fallback state to trigger subscriptions
-  const [realtimeClient, setRealtimeClient] = useState(supabase);
-
-  useEffect(() => {
-    const fetchSupabaseConfig = async () => {
-      // 1. If static client is already initialized, use it immediately
-      if (supabase) {
-        console.log('[Vlad Debug] Supabase client is statically READY from build env.');
-        setRealtimeClient(supabase);
-        return;
-      }
-
-      // 2. Otherwise, fetch credentials dynamically from the backend server
-      console.log('[Vlad Debug] Supabase client NULL at build. Fetching dynamic runtime config from backend...');
-      try {
-        const configRes = await axios.get(`${API_BASE_URL}/api/supabase-config`);
-        if (configRes.data.supabaseUrl && configRes.data.supabaseAnonKey) {
-          const client = initializeSupabaseClient(configRes.data.supabaseUrl, configRes.data.supabaseAnonKey);
-          if (client) {
-            console.log('[Vlad Debug] Supabase client successfully initialized dynamically at runtime!');
-            setRealtimeClient(client);
-          } else {
-            console.warn('[Vlad Debug] Dynamic initialization returned null client.');
-          }
-        } else {
-          console.warn('[Vlad Debug] Backend returned empty Supabase credentials.');
-        }
-      } catch (err) {
-        console.error('[Vlad Debug] Failed to fetch dynamic Supabase credentials from backend:', err.message);
-      }
-    };
-
-    fetchSupabaseConfig();
-  }, []);
-
-  const [scrapeStatus, setScrapeStatus] = useState('idle');
-  const [progress, setProgress] = useState({ currentPage: 0, totalEntries: 0 });
   const [error, setError] = useState('');
   const [currentTablePage, setCurrentTablePage] = useState(1);
   const [lastScrapeTime, setLastScrapeTime] = useState(null);
-  const [isFirstScrape, setIsFirstScrape] = useState(false);
-  const [currentTriviaIndex, setCurrentTriviaIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [showUnitWarning, setShowUnitWarning] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   
   // New States for direct scheduling
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
@@ -789,64 +600,75 @@ function Success() {
     e.preventDefault();
     try {
       if (editingId) {
-        // Update
-        const res = await axios.put(`${API_BASE_URL}/api/offerings/${editingId}`, customCourse);
-        if (res.data.success) {
-          alert('Offering updated successfully!');
-          // Re-fetch all offerings
-          const dataRes = await axios.get(`${API_BASE_URL}/api/scrape/data`);
-          if (dataRes.data.entries) setOfferings(dataRes.data.entries);
-          setEditingId(null);
-          setCustomCourse({
-            course_code: '',
-            title: '',
-            units: '3',
-            section: '',
-            schedule_raw: '',
-            room: '',
-            instructor: '',
-            open_slots: '35'
-          });
-        }
+        // Update directly in Supabase
+        const updatedFields = {
+          ...customCourse,
+          last_updated: new Date().toISOString()
+        };
+        const { error: err } = await supabase.from('course_offerings').update(updatedFields).eq('id', editingId);
+        if (err) throw err;
+
+        alert('Offering updated successfully!');
+        // Re-fetch all offerings directly from Supabase
+        const freshOfferings = await fetchFullTable('course_offerings', 'course_code');
+        setOfferings(freshOfferings);
+        
+        setEditingId(null);
+        setCustomCourse({
+          course_code: '',
+          title: '',
+          units: '3',
+          section: '',
+          schedule_raw: '',
+          room: '',
+          instructor: '',
+          open_slots: '35'
+        });
       } else {
-        // Create
-        const res = await axios.post(`${API_BASE_URL}/api/offerings`, customCourse);
-        if (res.data.success) {
-          alert('Offering created successfully!');
-          // Re-fetch all offerings
-          const dataRes = await axios.get(`${API_BASE_URL}/api/scrape/data`);
-          if (dataRes.data.entries) setOfferings(dataRes.data.entries);
-          setCustomCourse({
-            course_code: '',
-            title: '',
-            units: '3',
-            section: '',
-            schedule_raw: '',
-            room: '',
-            instructor: '',
-            open_slots: '35'
-          });
-        }
+        // Create directly in Supabase
+        const newRecord = {
+          ...customCourse,
+          is_custom: true,
+          last_updated: new Date().toISOString()
+        };
+        const { error: err } = await supabase.from('course_offerings').insert([newRecord]);
+        if (err) throw err;
+
+        alert('Offering created successfully!');
+        // Re-fetch all offerings directly from Supabase
+        const freshOfferings = await fetchFullTable('course_offerings', 'course_code');
+        setOfferings(freshOfferings);
+
+        setCustomCourse({
+          course_code: '',
+          title: '',
+          units: '3',
+          section: '',
+          schedule_raw: '',
+          room: '',
+          instructor: '',
+          open_slots: '35'
+        });
       }
     } catch (err) {
       console.error(err);
-      alert('Operation failed: ' + (err.response?.data?.error || err.message));
+      alert('Operation failed: ' + err.message);
     }
   };
 
   const handleDeleteOffering = async (id) => {
     if (!confirm('Are you sure you want to delete this offering?')) return;
     try {
-      const res = await axios.delete(`${API_BASE_URL}/api/offerings/${id}`);
-      if (res.data.success) {
-        alert('Offering deleted successfully!');
-        // Re-fetch all offerings
-        const dataRes = await axios.get(`${API_BASE_URL}/api/scrape/data`);
-        if (dataRes.data.entries) setOfferings(dataRes.data.entries);
-      }
+      const { error: err } = await supabase.from('course_offerings').delete().eq('id', id);
+      if (err) throw err;
+
+      alert('Offering deleted successfully!');
+      // Re-fetch all offerings directly from Supabase
+      const freshOfferings = await fetchFullTable('course_offerings', 'course_code');
+      setOfferings(freshOfferings);
     } catch (err) {
       console.error(err);
-      alert('Delete failed: ' + (err.response?.data?.error || err.message));
+      alert('Delete failed: ' + err.message);
     }
   };
 
@@ -960,47 +782,36 @@ function Success() {
     }
   };
 
-  // Trivia Cycle Logic
+  // 1. Initial Load of Offerings directly from Supabase
   useEffect(() => {
-    if ((scrapeStatus === 'scraping' || scrapeStatus === 'idle') && offerings.length === 0) {
-      const interval = setInterval(() => {
-        setCurrentTriviaIndex(prev => (prev + 1) % ADNU_TRIVIAS.length);
-      }, 8000);
-      return () => clearInterval(interval);
-    }
-  }, [scrapeStatus, offerings.length]);
-
-  // Audio Control: Regnum Dei Sync Music
-  useEffect(() => {
-    // Play when first scrape starts
-    if (isFirstScrape && (scrapeStatus === 'scraping' || scrapeStatus === 'idle')) {
-      if (!audioRef.current) {
-        audioRef.current = new Audio('/regnum_dei.mp3');
-        audioRef.current.loop = true;
-        audioRef.current.volume = 0.5; // Set volume to 50%
-      }
-      audioRef.current.play().catch(err => console.log('Audio playback pending user interaction:', err));
-    }
-
-    // Fade out when done
-    if (scrapeStatus === 'done' && audioRef.current && !audioRef.current.paused) {
-      const fadeInterval = setInterval(() => {
-        if (audioRef.current.volume > 0.05) {
-          audioRef.current.volume -= 0.05;
-        } else {
-          audioRef.current.pause();
-          audioRef.current.volume = 0.5; // Reset to 50% for next time
-          clearInterval(fadeInterval);
+    const loadOfferings = async () => {
+      setInitialLoading(true);
+      try {
+        const data = await fetchFullTable('course_offerings', 'course_code');
+        if (data && data.length > 0) {
+          setOfferings(data);
+          
+          // Get the latest last_updated timestamp from offerings
+          const updates = data.map(d => d.last_updated).filter(Boolean);
+          if (updates.length > 0) {
+            // Sort to find the latest
+            const latest = updates.sort((a, b) => new Date(b) - new Date(a))[0];
+            setLastScrapeTime(latest);
+          }
         }
-      }, 150);
-      return () => clearInterval(fadeInterval);
-    }
-  }, [isFirstScrape, scrapeStatus]);
+      } catch (err) {
+        console.error('Failed to load offerings from Supabase:', err);
+        setError('Failed to fetch data directly from Supabase. Please ensure you are connected to the internet.');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    loadOfferings();
+  }, []);
 
-  // Realtime listener for course offerings (Zero refresh instant sync)
+  // 2. Realtime listener for course offerings (Zero refresh instant sync)
   useEffect(() => {
-    if (!realtimeClient) return;
-    const channel = realtimeClient
+    const channel = supabase
       .channel('public:course_offerings')
       .on(
         'postgres_changes',
@@ -1010,7 +821,6 @@ function Success() {
 
           if (payload.eventType === 'INSERT') {
             setOfferings((prev) => {
-              // Prevent duplicate inserts
               if (prev.some(o => o.id === payload.new.id)) return prev;
               return [...prev, payload.new];
             });
@@ -1032,87 +842,9 @@ function Success() {
       .subscribe();
 
     return () => {
-      realtimeClient.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
-  }, [realtimeClient]);
-
-  // Use sessionStorage to track if we have already seen a 'done' status in this browser session
-  // This ensures that navigating back and forth between tabs doesn't re-trigger the loading screen
-  const initialDoneKey = 'vlad_initial_scrape_done';
-
-  const isFetchingData = useRef(false);
-
-  useEffect(() => {
-    const checkStatus = async () => {
-      if (isFetchingData.current) return;
-
-      try {
-        const res = await axios.get(`${API_BASE_URL}/api/scrape/status`);
-        
-        setProgress({ 
-          currentPage: res.data.currentPage, 
-          totalEntries: res.data.totalEntries 
-        });
-
-        const isScraping = res.data.status === 'scraping';
-        const isDone = res.data.status === 'done';
-        const isIdle = res.data.status === 'idle';
-
-        // 1. Manage the Initial Sync UI (Trivia screen)
-        // If it's the first time in this session AND we are scraping, STAY on the loading screen
-        if (isScraping && !sessionStorage.getItem(initialDoneKey)) {
-          setScrapeStatus('scraping');
-          setIsFirstScrape(true);
-        } else if (isIdle && offerings.length === 0 && !sessionStorage.getItem(initialDoneKey)) {
-          setScrapeStatus('idle');
-          setIsFirstScrape(true);
-        } else if (isDone) {
-          setIsFirstScrape(false);
-          setScrapeStatus('done');
-          sessionStorage.setItem(initialDoneKey, 'true');
-        }
-
-        // 2. Manage Data Fetching (Independent of UI state)
-        if (offerings.length === 0 || res.data.lastScrapeTime !== lastScrapeTime) {
-          isFetchingData.current = true;
-          try {
-            const dataRes = await axios.get(`${API_BASE_URL}/api/scrape/data`);
-            if (dataRes.data.entries && dataRes.data.entries.length > 0) {
-              setOfferings(dataRes.data.entries);
-              setLastScrapeTime(res.data.lastScrapeTime || new Date().toISOString());
-              
-              // Only hide the trivia screen if we aren't currently in the middle of a live scrape
-              // OR if we already finished one in this session.
-              if (!isScraping || sessionStorage.getItem(initialDoneKey)) {
-                setIsFirstScrape(false);
-                setScrapeStatus(isDone ? 'done' : 'scraping');
-              }
-
-              setCurrentTablePage(prev => {
-                const newTotalPages = Math.ceil(dataRes.data.entries.length / rowsPerPage);
-                return prev > newTotalPages ? 1 : prev;
-              });
-            }
-          } catch (fetchErr) {
-            // silent fail
-          } finally {
-            isFetchingData.current = false;
-          }
-        }
-
-        if (res.data.status === 'error') {
-          setError(res.data.error);
-          setScrapeStatus('error');
-        }
-      } catch (err) {
-        // Backend might not be ready yet
-      }
-    };
-
-    checkStatus();
-    const interval = setInterval(checkStatus, 3000); // Increased to 3s to reduce load
-    return () => clearInterval(interval);
-  }, [lastScrapeTime, offerings.length]); 
+  }, []); 
 
   // Pagination on SUBJECTS level
   const indexOfLastRow = currentTablePage * rowsPerPage;
@@ -1129,7 +861,7 @@ function Success() {
   };
 
   // Percentage based on ~2000 entries
-  const percentage = Math.min(100, Math.round(((progress.totalEntries || 0) / 2000) * 100));
+  const percentage = Math.min(100, Math.round(((offerings.length || 0) / 2000) * 100));
 
   // Format the last scrape time for display
   const formatScrapeTime = (isoString) => {
@@ -1260,69 +992,26 @@ function Success() {
         </div>
       )}
       
-      {/* ===== INITIALIZING / SYNCING SCREEN ===== */}
-      {isFirstScrape && (scrapeStatus === 'scraping' || scrapeStatus === 'idle') && (
-        <div className="first-scrape-layout">
-          <div className="scrape-loading-panel">
-            <div className="scrape-loader-icon">
-              <div className="scrape-ring"></div>
-              <div className="scrape-ring-inner"></div>
-              <span className="scrape-percentage-text" style={{ fontSize: '2rem' }}>
-                {scrapeStatus === 'scraping' ? `${percentage}%` : '⏳'}
-              </span>
-            </div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: '1.5rem 0 0.5rem', letterSpacing: '-0.5px' }}>
-              {scrapeStatus === 'scraping' 
-                ? (percentage < 100 ? 'Syncing MyAdNU Offerings' : 'Preparing your data...')
-                : 'Initializing Scraper'}
-            </h2>
-            <p style={{ color: '#475569', fontSize: '1rem', margin: 0 }}>
-              {scrapeStatus === 'scraping' 
-                ? (percentage >= 100 ? 'I am preparing the data from MyAdNU' : `${progress.totalEntries} entries captured...`)
-                : 'Waiting for the engine to begin...'}
-            </p>
-            {scrapeStatus === 'scraping' && (
-              <div className="scrape-progress-track" style={{ marginTop: '1.5rem' }}>
-                <div className="scrape-progress-fill" style={{ width: `${percentage}%` }}></div>
-              </div>
-            )}
-          </div>
-
-          <div className="trivia-container">
-            <div className="trivia-label">Did you know?</div>
-            <p 
-              key={currentTriviaIndex} 
-              className="trivia-text"
-              style={{ 
-                fontSize: ADNU_TRIVIAS[currentTriviaIndex].length > 150 ? '1.15rem' : '1.4rem' 
-              }}
-            >
-              {ADNU_TRIVIAS[currentTriviaIndex]}
-            </p>
-            <div className="trivia-decoration">AdNU</div>
-          </div>
+      {/* ===== INITIALIZING / LOADING SCREEN ===== */}
+      {initialLoading && (
+        <div className="overlay" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="spinner"></div>
+          <h3 style={{ color: '#1e293b' }}>Connecting to Supabase...</h3>
+          <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Loading course offerings directly from database.</p>
         </div>
       )}
 
       {/* ===== ERROR STATE ===== */}
-      {scrapeStatus === 'error' && (
-        <div style={{ textAlign: 'center', marginTop: '4rem', color: '#f87171' }}>
+      {!initialLoading && offerings.length === 0 && error && (
+        <div style={{ textAlign: 'center', marginTop: '4rem', color: '#ef4444' }}>
           <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>❌</div>
-          <h3 style={{ fontSize: '1.5rem' }}>Scraping Error</h3>
+          <h3 style={{ fontSize: '1.5rem' }}>Failed to Load Offerings</h3>
           <p style={{ color: '#ef4444' }}>{error}</p>
         </div>
       )}
 
-      {/* ===== LOADING STATE (on refresh) ===== */}
-      {!isFirstScrape && offerings.length === 0 && scrapeStatus !== 'error' && (
-        <div className="overlay">
-          <div className="spinner"></div>
-          <h3 style={{ color: '#1e3a8a' }}>Fetching latest offerings...</h3>
-        </div>
-      )}
-
       {/* ===== AFTER FIRST SCRAPE: Data Table ===== */}
-      {offerings.length > 0 && !isFirstScrape && (
+      {!initialLoading && offerings.length > 0 && (
         <div style={{ color: '#1e293b', width: '100%' }}>
           {/* Generation Error Banner */}
           {error && viewMode === 'offerings' && (
@@ -1737,38 +1426,9 @@ function Kaizen() {
   const [userPreferences, setUserPreferences] = useState(null);
   const [isDownloading, setIsDownloading] = useState(null);
 
-  // Dynamic credentials fallback state to trigger subscriptions in Kaizen Advisement page
-  const [realtimeClient, setRealtimeClient] = useState(supabase);
-
-  useEffect(() => {
-    const fetchSupabaseConfig = async () => {
-      // 1. If static client is already initialized, use it immediately
-      if (supabase) {
-        setRealtimeClient(supabase);
-        return;
-      }
-
-      // 2. Otherwise, fetch credentials dynamically from the backend server
-      try {
-        const configRes = await axios.get(`${API_BASE_URL}/api/supabase-config`);
-        if (configRes.data.supabaseUrl && configRes.data.supabaseAnonKey) {
-          const client = initializeSupabaseClient(configRes.data.supabaseUrl, configRes.data.supabaseAnonKey);
-          if (client) {
-            setRealtimeClient(client);
-          }
-        }
-      } catch (err) {
-        console.error('[Vlad Debug] Failed to fetch dynamic Supabase credentials from backend:', err.message);
-      }
-    };
-
-    fetchSupabaseConfig();
-  }, []);
-
   // Realtime listener for course offerings in Kaizen Advisement page (Zero refresh instant sync)
   useEffect(() => {
-    if (!realtimeClient) return;
-    const channel = realtimeClient
+    const channel = supabase
       .channel('kaizen:course_offerings')
       .on(
         'postgres_changes',
@@ -1799,9 +1459,9 @@ function Kaizen() {
       .subscribe();
 
     return () => {
-      realtimeClient.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
-  }, [realtimeClient]);
+  }, []);
 
   const handleDownload = async (index) => {
     setIsDownloading(index);
@@ -1937,22 +1597,42 @@ function Kaizen() {
           return false;
         }
       } else {
-        const res = await axios.get(`${API_BASE_URL}/api/kaizen/data`);
-        if (res.data.advisedSubjects && (res.data.advisedSubjects.length > 0 || res.data.electiveOptions.length > 0)) {
-          setAdvisedSubjects(res.data.advisedSubjects);
-          setElectiveOptions(res.data.electiveOptions);
-          setLastScrapeTime(res.data.lastScrapeTime);
-          setKaizenStatus('done');
-          
-          // Fetch offerings too
-          const offRes = await axios.get(`${API_BASE_URL}/api/scrape/data`);
-          if (offRes.data.entries) setOfferings(offRes.data.entries);
-          
-          return true;
+        // Query Supabase directly
+        const { data: advData, error: advErr } = await supabase.from('student_advisement').select('*');
+        const { data: elecData, error: elecErr } = await supabase.from('elective_options').select('*');
+        
+        if (advErr) console.warn('Supabase advisement load failed:', advErr);
+        if (elecErr) console.warn('Supabase electives load failed:', elecErr);
+
+        const advised = (advData || []).map(d => d.subject_code);
+        const electives = (elecData || []).map(e => ({
+          no: e.id,
+          subject_code: e.subject_code,
+          subject_title: e.subject_title,
+          units: e.units,
+          credited: e.credited,
+          is_custom: e.is_custom
+        }));
+
+        setAdvisedSubjects(advised);
+        setElectiveOptions(electives);
+        setLastScrapeTime(new Date().toISOString());
+        
+        // Fetch offerings too
+        try {
+          const offRes = await fetchFullTable('course_offerings', 'course_code');
+          if (offRes && offRes.length > 0) {
+            setOfferings(offRes);
+          }
+        } catch (offErr) {
+          console.warn('Supabase offerings load failed:', offErr);
         }
-        return false;
+
+        setKaizenStatus('done');
+        return true;
       }
     } catch (err) {
+      console.error('Error fetching Kaizen data:', err);
       return false;
     }
   };
@@ -2013,7 +1693,7 @@ function Kaizen() {
             </button>
           )}
           <button 
-            onClick={() => navigate('/success')} 
+            onClick={() => navigate('/')} 
             className="login-btn"
             style={{ 
               marginTop: 0, 
@@ -2275,8 +1955,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/success" element={<Success />} />
+        <Route path="/" element={<Dashboard />} />
         <Route path="/vlad" element={<Kaizen />} />
       </Routes>
     </Router>

@@ -1,13 +1,13 @@
 {
   "advisedSubjects": [
-    "CSEC001",
     "CSEC002",
     "CSEC003",
     "CSMC311",
     "CSMC312",
     "CSMC313",
     "PHIN103",
-    "THEN102"
+    "THEN102",
+    "COMP301"
   ],
   "electiveOptions": [
     {
@@ -15,155 +15,177 @@
       "subject_code": "CSEC301",
       "subject_title": "PARALLEL PROGRAMMING",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "1000bd55-4740-4f99-97b2-d845158fddb5",
       "subject_code": "CSEC302",
       "subject_title": "DATA MINING AND TECHNIQUES",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "b735a79b-10c8-4bcb-b996-541d908285b2",
       "subject_code": "CSEC303",
       "subject_title": "DIGITAL IMAGE PROCESSING",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "0aab9218-1be6-49ab-83d5-8ab4427b3d3a",
       "subject_code": "CSEC304",
       "subject_title": "SOFTWARE APPLICATION PRODUCTS (SAP)",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "d369d121-f141-437a-8d7d-3526d167a25f",
       "subject_code": "CSEC305",
       "subject_title": "COMPILERS AND INTERPRETERS",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "47d2304c-9f49-42a5-bbe0-9fb5d8869910",
       "subject_code": "CSEC306",
       "subject_title": "MACHINE LEARNING PLATFORMS AND APPLICATIONS",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "71d42212-5b1f-45d4-80e9-0aa05271a8ef",
       "subject_code": "CSEC307",
       "subject_title": "INTRODUCTION TO DEEP LEARNING",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "c7303a5b-e945-4e76-bbf4-82fff563f2e8",
       "subject_code": "CSEC308",
       "subject_title": "UNDERGRADUATE SEMINAR",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "8dc6459a-614d-4bb8-b94f-0d54e2c07895",
       "subject_code": "CSEC309",
       "subject_title": "SCIENTIFIC COMPUTING",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "92edc38c-009d-425b-b39d-837470b57178",
       "subject_code": "CSME201",
       "subject_title": "SPECIAL TOPICS IN MATH FOR COMPUTER",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "068fc1a4-ea35-4501-a9ae-ddd00f0d8425",
       "subject_code": "CSME202",
       "subject_title": "PROBABILITY THEORY FOR COMPUTER SCIENTISTS",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "050a842d-f8f5-4fc6-a1bf-52421310ab35",
       "subject_code": "CSME203",
       "subject_title": "GRAPH THEORY",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "61120c0b-0259-41c7-bf7a-74f192d304c4",
       "subject_code": "CSME204",
       "subject_title": "COMPLEXITY THEORY",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "6e091672-5054-4ca0-abba-fdd1882ee640",
       "subject_code": "ENGE101",
       "subject_title": "PROFESSIONAL COMMUNICATION WITH EMERGING MEDIA",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "91a7de42-5179-4350-8952-dc2986c2311a",
       "subject_code": "ENGE102",
       "subject_title": "LITERATURE OF THE BIKOL REGION",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "d50ce5fa-df93-47b1-89b8-aaae43879252",
       "subject_code": "FILE101",
       "subject_title": "PANITIKANG FILIPINO SA/NG IKA-21 SIGLO",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "25455dd0-2606-41a3-a7c7-be6010be9519",
       "subject_code": "FILS102",
       "subject_title": "DALUMAT NG/SA FILIPINO",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "e97f1f84-c9da-4a32-9966-66d545dfb615",
       "subject_code": "FILS103",
       "subject_title": "SOSYEDAD AT LITERATURA/PANITIKANG PANLIPUNAN",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "c08dff32-73d0-46cb-b573-f905afee8e7e",
       "subject_code": "FILS104",
       "subject_title": "SINESOSYEDAD/PELIKULANG PANLIPUNAN",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "4c770dfa-f4ce-4ee5-bfda-b2127e0a6f2b",
       "subject_code": "ITEC303",
       "subject_title": "MOBILE COMPUTING AND COMMUNICATION",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "25b60bb1-db4c-423e-9afd-8e633b27875e",
       "subject_code": "ITMC313",
       "subject_title": "WEB SYSTEMS AND TECHNOLOGIES",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     },
     {
       "no": "2973c68e-f57c-4d02-bd48-00e0551eab54",
       "subject_code": "MSGE101",
       "subject_title": "DIGITAL PHOTOGRAPHY",
       "units": "3",
-      "credited": ""
+      "credited": "",
+      "is_custom": false
     }
   ],
-  "lastScrapeTime": "2026-05-19T03:25:34.810Z"
+  "lastScrapeTime": "2026-05-19T09:37:44.451Z"
 }
