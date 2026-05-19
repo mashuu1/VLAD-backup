@@ -81,6 +81,7 @@ let scrapeState = {
 
 let passiveInterval = null;
 const PASSIVE_SCRAPE_INTERVAL_MS = 120000; // 2 minutes
+let isScrapeInProgress = false;
 
 // KAIZEN state
 let activeCollegePage = null;
@@ -197,6 +198,13 @@ app.post('/api/sync-gbox', async (req, res) => {
 
     if (handshakeState.status === 'running') {
         return res.status(409).json({ error: 'Another login handshake is currently in progress.' });
+    }
+
+    // Stop any existing passive background scraping intervals during login to avoid conflicts
+    if (passiveInterval) {
+        clearInterval(passiveInterval);
+        passiveInterval = null;
+        console.log('[Handshake] Stopped passive interval to prevent session conflict.');
     }
 
     // Store credentials for KAIZEN reuse
@@ -389,17 +397,26 @@ async function optimizeView(page) {
         for (let i = 0; i < count; i++) {
             const dropdown = selectLocator.nth(i);
             const textContent = await dropdown.textContent();
+            let changed = false;
             // Select "All Subjects"
             if (textContent.includes('All Subjects') || textContent.includes('Computer Science')) {
                 await dropdown.selectOption({ label: 'All Subjects' });
+                changed = true;
             }
             // Select "100" records per page
             if (textContent.includes('100') && (textContent.includes('10') || textContent.includes('50'))) {
                 await dropdown.selectOption('100').catch(() => dropdown.selectOption({ label: '100' }));
+                changed = true;
+            }
+            
+            // If we modified a dropdown, wait for the table reload/stabilization
+            if (changed) {
+                await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+                await page.waitForTimeout(1500);
             }
         }
         await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
     } catch (err) {
         console.warn('[Scraper] Optimization failed for a tab:', err.message);
     }
@@ -490,11 +507,12 @@ async function triggerScrape() {
         console.log('[Scraper] Cannot scrape: no active offerings page.');
         return;
     }
-    // Only skip if an ACTUAL scraping loop is already in progress (currentPage > 0)
-    if (scrapeState.status === 'scraping' && scrapeState.currentPage > 0) {
-        console.log('[Scraper] Already scraping, skipping.');
+    // Strict Mutex Lock: Prevent overlapping triggerScrape executions
+    if (isScrapeInProgress) {
+        console.log('[Scraper] Already scraping, skipping trigger.');
         return;
     }
+    isScrapeInProgress = true;
 
     // Preserve existing entries during passive re-scrapes so the frontend still has data
     scrapeState = {
@@ -577,32 +595,125 @@ async function triggerScrape() {
         fs.writeFileSync('./data/offerings.json', JSON.stringify(entries, null, 2));
         console.log(`[Scraper] Done. Saved ${entries.length} entries to disk.`);
 
-        // Sync to Supabase: Delete ONLY scraped records, preserving manually created ones
-        console.log('[Scraper] Syncing to Supabase (Smart Sync)...');
+        // Sync to Supabase: Smart Differential Sync (Zero downtime, updates individual items)
+        console.log('[Scraper] Syncing to Supabase (Smart Differential Sync)...');
         
-        // Delete only non-custom (automatically scraped) entries
-        await supabase.from('course_offerings').delete().eq('is_custom', false);
+        try {
+            // 1. Fetch all existing offerings from Supabase
+            const allDbOfferings = await fetchFullTable('course_offerings', 'course_code');
+            const dbOfferings = allDbOfferings.filter(o => !o.is_custom);
 
-        // Insert in batches
-        const batchSize = 100;
-        for (let i = 0; i < entries.length; i += batchSize) {
-            const batch = entries.slice(i, i + batchSize).map(e => ({
-                course_code: e.course_code,
-                title: e.title,
-                units: e.units,
-                section: e.section,
-                schedule_raw: e.schedule_raw,
-                room: e.room,
-                instructor: e.instructor,
-                open_slots: e.open_slots,
-                last_updated: scrapeState.lastScrapeTime,
-                is_custom: false
-            }));
-            const { error: syncError } = await supabase.from('course_offerings').insert(batch);
-            if (syncError) console.error(`[Scraper] Batch ${i} Error:`, syncError);
+            // Helper to generate a unique composite key for an offering
+            const makeKey = (e) => `${(e.course_code || '').trim().toUpperCase()}|${(e.section || '').trim().toUpperCase()}|${(e.schedule_raw || '').trim().toUpperCase()}`;
+
+            // Create a map of existing DB records by key
+            const dbMap = new Map();
+            for (const item of dbOfferings) {
+                dbMap.set(makeKey(item), item);
+            }
+
+            // Keep track of which DB IDs are matched, to identify which ones to delete
+            const matchedDbIds = new Set();
+
+            // Arrays to hold records that need to be inserted or updated
+            const toInsert = [];
+            const toUpdate = [];
+
+            for (const e of entries) {
+                const key = makeKey(e);
+                const existing = dbMap.get(key);
+
+                if (existing) {
+                    matchedDbIds.add(existing.id);
+
+                    // Check if any fields actually changed
+                    const titleChanged = (existing.title !== e.title);
+                    const unitsChanged = (Number(existing.units) !== Number(e.units));
+                    const roomChanged = (existing.room !== e.room);
+                    const instructorChanged = (existing.instructor !== e.instructor);
+                    const slotsChanged = (existing.open_slots !== e.open_slots);
+
+                    if (titleChanged || unitsChanged || roomChanged || instructorChanged || slotsChanged) {
+                        toUpdate.push({
+                            id: existing.id,
+                            course_code: e.course_code,
+                            title: e.title,
+                            units: e.units,
+                            section: e.section,
+                            schedule_raw: e.schedule_raw,
+                            room: e.room,
+                            instructor: e.instructor,
+                            open_slots: e.open_slots,
+                            last_updated: scrapeState.lastScrapeTime,
+                            is_custom: false
+                        });
+                    }
+                } else {
+                    // New offering, insert it
+                    toInsert.push({
+                        course_code: e.course_code,
+                        title: e.title,
+                        units: e.units,
+                        section: e.section,
+                        schedule_raw: e.schedule_raw,
+                        room: e.room,
+                        instructor: e.instructor,
+                        open_slots: e.open_slots,
+                        last_updated: scrapeState.lastScrapeTime,
+                        is_custom: false
+                    });
+                }
+            }
+
+            // Identify records in DB that were NOT matched by the scraper (i.e. they were removed)
+            const toDeleteIds = dbOfferings
+                .filter(o => !matchedDbIds.has(o.id))
+                .map(o => o.id);
+
+            console.log(`[Smart Sync] Stats: To Insert: ${toInsert.length}, To Update: ${toUpdate.length}, To Delete: ${toDeleteIds.length}`);
+
+            // Perform inserts in batches of 100
+            const batchSize = 100;
+            for (let i = 0; i < toInsert.length; i += batchSize) {
+                const batch = toInsert.slice(i, i + batchSize);
+                const { error: insertError } = await supabase.from('course_offerings').insert(batch);
+                if (insertError) console.error('[Smart Sync] Error batch inserting:', insertError.message);
+            }
+
+            // Perform updates in parallel chunks of 10 to avoid connection overload
+            const updateBatchSize = 10;
+            for (let i = 0; i < toUpdate.length; i += updateBatchSize) {
+                const batch = toUpdate.slice(i, i + updateBatchSize);
+                await Promise.all(batch.map(async (item) => {
+                    const { error: updateError } = await supabase
+                        .from('course_offerings')
+                        .update({
+                            title: item.title,
+                            units: item.units,
+                            room: item.room,
+                            instructor: item.instructor,
+                            open_slots: item.open_slots,
+                            last_updated: item.last_updated
+                        })
+                        .eq('id', item.id);
+                    if (updateError) console.error(`[Smart Sync] Error updating ID ${item.id}:`, updateError.message);
+                }));
+            }
+
+            // Perform deletes in batches of 100
+            for (let i = 0; i < toDeleteIds.length; i += batchSize) {
+                const batch = toDeleteIds.slice(i, i + batchSize);
+                const { error: deleteError } = await supabase
+                    .from('course_offerings')
+                    .delete()
+                    .in('id', batch);
+                if (deleteError) console.error('[Smart Sync] Error batch deleting:', deleteError.message);
+            }
+
+            console.log('[Scraper] Successfully completed Smart Differential Sync.');
+        } catch (syncErr) {
+            console.error('[Scraper] Smart Differential Sync failed:', syncErr.message);
         }
-        
-        console.log('[Scraper] Successfully synced all records to Supabase.');
 
         // Schedule passive re-scraping if not already running
         if (!passiveInterval) {
@@ -617,6 +728,8 @@ async function triggerScrape() {
         scrapeState.status = 'error';
         scrapeState.error = err.message;
         console.error(`[Scraper] Error:`, err);
+    } finally {
+        isScrapeInProgress = false;
     }
 }
 
@@ -665,6 +778,7 @@ app.post('/api/data/clean', (req, res) => {
             error: null,
             lastScrapeTime: null,
         };
+        isScrapeInProgress = false;
 
         // 4. Reset in-memory KAIZEN state
         kaizenState = {
