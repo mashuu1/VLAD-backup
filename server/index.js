@@ -6,6 +6,7 @@ const fs = require('fs');
 const { chromium } = require('playwright-extra');
 const stealth = require('puppeteer-extra-plugin-stealth')();
 require('dotenv').config();
+const HEADLESS = process.env.HEADLESS !== 'false';
 const Groq = require('groq-sdk');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -158,7 +159,7 @@ app.post('/api/sync-gbox', async (req, res) => {
         console.log(`[Phase 2] Launching internal Playwright Engine for ${email}...`);
         
         // Launch Playwright with the new headless mode for better performance on Windows
-        const browser = await chromium.launch({ headless: true });
+        const browser = await chromium.launch({ headless: HEADLESS });
         const context = await browser.newContext();
         const page = await context.newPage(); // This is the FIRST Tab
 
@@ -201,9 +202,7 @@ app.post('/api/sync-gbox', async (req, res) => {
 
         console.log(`[Phase 3] Waiting for Google login to redirect back to services.adnu.edu.ph...`);
         // Wait for the URL to change indicating success (we specifically wait for the home dashboard!)
-        await page.waitForFunction(() => {
-            return window.location.href.includes('myadnu/index.php/home');
-        }, { timeout: 300000 });
+        await page.waitForURL('**/myadnu/index.php/home', { timeout: 300000 });
         console.log(`[Phase 3] Google Handshake completed! Landed heavily on HOME Dashboard.`);
         console.log(`[Phase 3] Waiting for SSO to fully resolve and log in...`);
         // We add a tiny network delay here to ensure MyAdNU successfully recognizes the session cookies
@@ -503,11 +502,11 @@ async function triggerScrape() {
         fs.writeFileSync('./data/offerings.json', JSON.stringify(entries, null, 2));
         console.log(`[Scraper] Done. Saved ${entries.length} entries to disk.`);
 
-        // Sync to Supabase: Delete all and Insert all to maintain 1:1 parity with portal
-        console.log('[Scraper] Syncing to Supabase (Delete + Insert)...');
+        // Sync to Supabase: Delete ONLY scraped records, preserving manually created ones
+        console.log('[Scraper] Syncing to Supabase (Smart Sync)...');
         
-        // Delete all existing records
-        await supabase.from('course_offerings').delete().neq('course_code', 'FORCE_DELETE_ALL');
+        // Delete only non-custom (automatically scraped) entries
+        await supabase.from('course_offerings').delete().eq('is_custom', false);
 
         // Insert in batches
         const batchSize = 100;
@@ -521,7 +520,8 @@ async function triggerScrape() {
                 room: e.room,
                 instructor: e.instructor,
                 open_slots: e.open_slots,
-                last_updated: scrapeState.lastScrapeTime
+                last_updated: scrapeState.lastScrapeTime,
+                is_custom: false
             }));
             const { error: syncError } = await supabase.from('course_offerings').insert(batch);
             if (syncError) console.error(`[Scraper] Batch ${i} Error:`, syncError);
@@ -639,7 +639,22 @@ app.get('/api/scrape/status', (req, res) => {
 });
 
 app.get('/api/scrape/data', async (req, res) => {
-    // 1. Try live memory data
+    // 1. Primary: Try Supabase directly (always gives freshest CRUD + scraped data)
+    try {
+        const { data, error } = await supabase.from('course_offerings').select('*').order('course_code', { ascending: true });
+        if (!error && data && data.length > 0) {
+            return res.json({ 
+                source: 'supabase', 
+                total: data.length, 
+                entries: data,
+                offerings: data 
+            });
+        }
+    } catch (err) {
+        console.error('[API] Supabase primary fetch failed, falling back to memory:', err);
+    }
+
+    // 2. Fallback: Try live memory data
     if (scrapeState.entries && scrapeState.entries.length > 0) {
         return res.json({ 
             source: 'live', 
@@ -649,23 +664,119 @@ app.get('/api/scrape/data', async (req, res) => {
         });
     }
 
-    // 2. Fallback: Try Supabase (fast fallback for refreshes while scraping)
-    try {
-        const { data, error } = await supabase.from('course_offerings').select('*');
-        if (!error && data && data.length > 0) {
-            console.log(`[API] Serving ${data.length} records from Supabase (Live data empty)`);
-            return res.json({ 
-                source: 'supabase', 
-                total: data.length, 
-                entries: data,
-                offerings: data 
-            });
-        }
-    } catch (err) {
-        console.error('[API] Supabase fallback failed:', err);
-    }
-
     res.status(404).json({ error: 'No data available. Scrape might be in progress.' });
+});
+
+// =============================================
+// DATABASE CRUD ENDPOINTS
+// =============================================
+
+// CREATE a manual course offering
+app.post('/api/offerings', async (req, res) => {
+    try {
+        const newRecord = {
+            ...req.body,
+            is_custom: true, // Mark as custom to protect from scraper deletion
+            last_updated: new Date().toISOString()
+        };
+        const { data, error } = await supabase.from('course_offerings').insert([newRecord]).select();
+        if (error) throw error;
+        
+        // Update in-memory state
+        if (data && data[0]) {
+            scrapeState.entries.push(data[0]);
+            scrapeState.totalEntries = scrapeState.entries.length;
+        }
+        
+        res.status(201).json({ success: true, data: data[0] });
+    } catch (err) {
+        console.error('[CRUD] Error creating offering:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// UPDATE a course offering
+app.put('/api/offerings/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedFields = {
+            ...req.body,
+            last_updated: new Date().toISOString()
+        };
+        const { data, error } = await supabase.from('course_offerings').update(updatedFields).eq('id', id).select();
+        if (error) throw error;
+        
+        // Update in-memory state
+        if (data && data[0]) {
+            const idx = scrapeState.entries.findIndex(e => String(e.id) === String(id));
+            if (idx !== -1) {
+                scrapeState.entries[idx] = data[0];
+            }
+        }
+        
+        res.json({ success: true, data: data[0] });
+    } catch (err) {
+        console.error('[CRUD] Error updating offering:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE a course offering
+app.delete('/api/offerings/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { error } = await supabase.from('course_offerings').delete().eq('id', id);
+        if (error) throw error;
+        
+        // Update in-memory state
+        scrapeState.entries = scrapeState.entries.filter(e => String(e.id) !== String(id));
+        scrapeState.totalEntries = scrapeState.entries.length;
+        
+        res.json({ success: true, message: 'Offering deleted successfully' });
+    } catch (err) {
+        console.error('[CRUD] Error deleting offering:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// CREATE manual student advisement subject
+app.post('/api/advisement', async (req, res) => {
+    try {
+        const newRecord = {
+            ...req.body,
+            is_custom: true
+        };
+        const { data, error } = await supabase.from('student_advisement').insert([newRecord]).select();
+        if (error) throw error;
+        
+        // Update in-memory state
+        if (data && data[0]) {
+            if (!kaizenState.advisedSubjects.includes(data[0].subject_code)) {
+                kaizenState.advisedSubjects.push(data[0].subject_code);
+            }
+        }
+        res.status(201).json({ success: true, data: data[0] });
+    } catch (err) {
+        console.error('[CRUD] Error creating advisement:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE manual student advisement subject
+app.delete('/api/advisement/:subject_code', async (req, res) => {
+    try {
+        const { subject_code } = req.params;
+        const { error } = await supabase.from('student_advisement').delete().eq('subject_code', subject_code);
+        if (error) throw error;
+        
+        // Update in-memory state
+        kaizenState.advisedSubjects = kaizenState.advisedSubjects.filter(c => c !== subject_code);
+        
+        res.json({ success: true, message: 'Advisement subject deleted successfully' });
+    } catch (err) {
+        console.error('[CRUD] Error deleting advisement:', err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // =============================================
@@ -693,7 +804,7 @@ app.post('/api/kaizen/start', async (req, res) => {
             
             // Run with headless: false to physically monitor the automated flow
             const browser = await chromium.launch({ 
-                headless: true,
+                headless: HEADLESS,
                 args: ['--no-sandbox', '--disable-setuid-sandbox'] 
             });
             const context = await browser.newContext();
@@ -960,25 +1071,28 @@ app.post('/api/kaizen/start', async (req, res) => {
             console.log('[KAIZEN] All phases complete! Saved to disk.');
 
             // Sync to Supabase
-            console.log('[KAIZEN] Syncing to Supabase...');
+            console.log('[KAIZEN] Syncing to Supabase (Smart Sync)...');
             
             // 1. Sync Advisement
             if (kaizenState.advisedSubjects.length > 0) {
-                await supabase.from('student_advisement').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Clear old
+                // Clear only automatically scraped advisement (is_custom = false)
+                await supabase.from('student_advisement').delete().eq('is_custom', false);
                 await supabase.from('student_advisement').insert(
-                    kaizenState.advisedSubjects.map(code => ({ subject_code: code }))
+                    kaizenState.advisedSubjects.map(code => ({ subject_code: code, is_custom: false }))
                 );
             }
 
             // 2. Sync Electives
             if (kaizenState.electiveOptions.length > 0) {
-                await supabase.from('elective_options').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Clear old
+                // Clear only automatically scraped electives (is_custom = false)
+                await supabase.from('elective_options').delete().eq('is_custom', false);
                 await supabase.from('elective_options').insert(
                     kaizenState.electiveOptions.map(e => ({
                         subject_code: e.subject_code,
                         subject_title: e.subject_title,
                         units: e.units,
-                        credited: e.credited
+                        credited: e.credited,
+                        is_custom: false
                     }))
                 );
             }
@@ -1028,8 +1142,34 @@ app.get('/api/kaizen/status', (req, res) => {
     });
 });
 
-app.get('/api/kaizen/data', (req, res) => {
-    // Only return data if the user has explicitly connected (status is 'done')
+app.get('/api/kaizen/data', async (req, res) => {
+    // 1. Primary: Try Supabase directly (always gives freshest CRUD + scraped data)
+    try {
+        const { data: advData, error: advError } = await supabase.from('student_advisement').select('*');
+        const { data: elecData, error: elecError } = await supabase.from('elective_options').select('*');
+        
+        if (!advError && !elecError && advData && elecData && (advData.length > 0 || elecData.length > 0)) {
+            const advised = advData.map(d => d.subject_code);
+            const electives = elecData.map(e => ({
+                no: e.id,
+                subject_code: e.subject_code,
+                subject_title: e.subject_title,
+                units: e.units,
+                credited: e.credited,
+                is_custom: e.is_custom
+            }));
+            
+            return res.json({
+                advisedSubjects: advised,
+                electiveOptions: electives,
+                lastScrapeTime: kaizenState.lastScrapeTime || new Date().toISOString()
+            });
+        }
+    } catch (err) {
+        console.error('[API] Supabase primary fetch failed, falling back to memory:', err);
+    }
+
+    // 2. Fallback: Only return data if the user has explicitly connected (status is 'done')
     if (kaizenState.status === 'done' && (kaizenState.advisedSubjects.length > 0 || kaizenState.electiveOptions.length > 0)) {
         return res.json({
             advisedSubjects: kaizenState.advisedSubjects,
@@ -1182,12 +1322,16 @@ app.post('/api/kaizen/generate', async (req, res) => {
 
     try {
         let offerings = [];
-        if (fs.existsSync('./data/offerings.json')) {
-            offerings = JSON.parse(fs.readFileSync('./data/offerings.json', 'utf8'));
+        console.log('[KAIZEN Generator] Fetching offerings from Supabase...');
+        const { data, error } = await supabase.from('course_offerings').select('*');
+        if (error) {
+            console.error('[KAIZEN Generator] Error fetching from Supabase, trying local file backup:', error);
+            if (fs.existsSync('./data/offerings.json')) {
+                offerings = JSON.parse(fs.readFileSync('./data/offerings.json', 'utf8'));
+            } else {
+                throw error;
+            }
         } else {
-            console.log('[KAIZEN Generator] offerings.json missing. Fetching from Supabase...');
-            const { data, error } = await supabase.from('offerings').select('*');
-            if (error) throw error;
             offerings = data;
         }
         // Always apply unit overrides when loading offerings (catches stale disk data)
@@ -1782,81 +1926,75 @@ app.post('/api/kaizen/generate', async (req, res) => {
 const PORT = 3000;
 
 async function initServerData() {
-    console.log('[Init] Checking for existing data...');
+    console.log('[Init] Checking for existing data in Supabase (Primary Source)...');
     try {
-        // 1. Try local offerings
-        if (fs.existsSync('./data/offerings.json')) {
-            const local = JSON.parse(fs.readFileSync('./data/offerings.json', 'utf8'));
-            if (local.length > 0) {
-                scrapeState.entries = local;
-                scrapeState.totalEntries = local.length;
-                scrapeState.status = 'done';
-                scrapeState.lastScrapeTime = new Date().toISOString();
-                console.log('[Init] Loaded offerings from local cache.');
-            }
-        } 
-        
-        // 2. Fallback to Supabase for offerings if local is empty
-        if (scrapeState.entries.length === 0) {
-            console.log('[Init] Local offerings cache empty. Fetching from Supabase...');
-            const { data, error } = await supabase.from('course_offerings').select('*');
-            if (!error && data && data.length > 0) {
-                scrapeState.entries = data;
-                scrapeState.totalEntries = data.length;
-                scrapeState.status = 'done';
-                scrapeState.lastScrapeTime = new Date().toISOString();
-                console.log('[Init] Loaded offerings from Supabase.');
-                // Save locally for next time
-                if (!fs.existsSync('./data')) fs.mkdirSync('./data');
-                fs.writeFileSync('./data/offerings.json', JSON.stringify(data, null, 2));
+        // 1. Fetch offerings from Supabase
+        const { data: offeringsData, error: offError } = await supabase.from('course_offerings').select('*');
+        if (!offError && offeringsData && offeringsData.length > 0) {
+            scrapeState.entries = offeringsData;
+            scrapeState.totalEntries = offeringsData.length;
+            scrapeState.status = 'done';
+            scrapeState.lastScrapeTime = new Date().toISOString();
+            console.log(`[Init] Loaded ${offeringsData.length} offerings from Supabase.`);
+            
+            // Save local file backup
+            if (!fs.existsSync('./data')) fs.mkdirSync('./data');
+            fs.writeFileSync('./data/offerings.json', JSON.stringify(offeringsData, null, 2));
+        } else if (offError) {
+            console.warn('[Init] Supabase offerings load failed, attempting local file backup:', offError.message);
+            if (fs.existsSync('./data/offerings.json')) {
+                const local = JSON.parse(fs.readFileSync('./data/offerings.json', 'utf8'));
+                if (local.length > 0) {
+                    scrapeState.entries = local;
+                    scrapeState.totalEntries = local.length;
+                    scrapeState.status = 'done';
+                    scrapeState.lastScrapeTime = new Date().toISOString();
+                    console.log('[Init] Loaded offerings from local cache backup.');
+                }
             }
         }
 
-        // 3. Pre-load advisement data into memory (but do NOT set status to 'done')
-        // The user must explicitly connect their Kaizen account via /start or /bypass first.
-        if (fs.existsSync('./data/advisement.json')) {
-            const saved = JSON.parse(fs.readFileSync('./data/advisement.json', 'utf8'));
-            kaizenState.advisedSubjects = saved.advisedSubjects || [];
-            kaizenState.electiveOptions = saved.electiveOptions || [];
-            kaizenState.lastScrapeTime = saved.lastScrapeTime || null;
-            // Keep status as 'idle' — user must connect their account first
-            console.log('[Init] Pre-loaded advisement from local cache (status remains idle until user connects).');
+        // 2. Fetch advisement & electives from Supabase
+        const { data: advData, error: advError } = await supabase.from('student_advisement').select('*');
+        const { data: elecData, error: elecError } = await supabase.from('elective_options').select('*');
+
+        if (!advError && advData && advData.length > 0) {
+            kaizenState.advisedSubjects = advData.map(d => d.subject_code);
+            console.log(`[Init] Loaded ${advData.length} advised subjects from Supabase.`);
+        }
+        if (!elecError && elecData && elecData.length > 0) {
+            kaizenState.electiveOptions = elecData.map(e => ({
+                no: e.id,
+                subject_code: e.subject_code,
+                subject_title: e.subject_title,
+                units: e.units,
+                credited: e.credited,
+                is_custom: e.is_custom
+            }));
+            console.log(`[Init] Loaded ${elecData.length} elective options from Supabase.`);
+        }
+
+        // Keep local cache file updated as backup
+        if (kaizenState.advisedSubjects.length > 0 || kaizenState.electiveOptions.length > 0) {
+            kaizenState.lastScrapeTime = new Date().toISOString();
+            if (!fs.existsSync('./data')) fs.mkdirSync('./data');
+            fs.writeFileSync('./data/advisement.json', JSON.stringify({
+                advisedSubjects: kaizenState.advisedSubjects,
+                electiveOptions: kaizenState.electiveOptions,
+                lastScrapeTime: kaizenState.lastScrapeTime
+            }, null, 2));
         } else {
-            // 4. Fallback to Supabase for advisement — pre-load only
-            console.log('[Init] Local advisement cache empty. Fetching from Supabase...');
-            const { data: advData, error: advError } = await supabase.from('student_advisement').select('*');
-            const { data: elecData, error: elecError } = await supabase.from('elective_options').select('*');
-
-            if (!advError && advData && advData.length > 0) {
-                kaizenState.advisedSubjects = advData.map(d => d.subject_code);
-                console.log(`[Init] Pre-loaded ${advData.length} advised subjects from Supabase.`);
-            }
-            if (!elecError && elecData && elecData.length > 0) {
-                kaizenState.electiveOptions = elecData.map(e => ({
-                    no: e.id, // or some other field if available
-                    subject_code: e.subject_code,
-                    subject_title: e.subject_title,
-                    units: e.units,
-                    credited: e.credited
-                }));
-                console.log(`[Init] Pre-loaded ${elecData.length} elective options from Supabase.`);
-            }
-
-            if (kaizenState.advisedSubjects.length > 0 || kaizenState.electiveOptions.length > 0) {
-                // Do NOT set status to 'done' — keep idle until user explicitly connects
-                kaizenState.lastScrapeTime = new Date().toISOString();
-                // Save locally for faster future loads
-                if (!fs.existsSync('./data')) fs.mkdirSync('./data');
-                fs.writeFileSync('./data/advisement.json', JSON.stringify({
-                    advisedSubjects: kaizenState.advisedSubjects,
-                    electiveOptions: kaizenState.electiveOptions,
-                    lastScrapeTime: kaizenState.lastScrapeTime
-                }, null, 2));
+            // Local file backup fallback if Supabase tables are empty
+            if (fs.existsSync('./data/advisement.json')) {
+                const saved = JSON.parse(fs.readFileSync('./data/advisement.json', 'utf8'));
+                kaizenState.advisedSubjects = saved.advisedSubjects || [];
+                kaizenState.electiveOptions = saved.electiveOptions || [];
+                kaizenState.lastScrapeTime = saved.lastScrapeTime || null;
+                console.log('[Init] Loaded advisement from local cache backup (Supabase tables empty).');
             }
         }
-
     } catch (err) {
-        console.error('[Init] Failed to load initial data:', err);
+        console.error('[Init] Failed to load initial data from Supabase:', err);
     }
 }
 

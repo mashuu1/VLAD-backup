@@ -687,6 +687,88 @@ function Success() {
   const [userPreferences, setUserPreferences] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  const [showCrudModal, setShowCrudModal] = useState(false);
+  const [customCourse, setCustomCourse] = useState({
+    course_code: '',
+    title: '',
+    units: '3',
+    section: '',
+    schedule_raw: '',
+    room: '',
+    instructor: '',
+    open_slots: '35'
+  });
+  const [editingId, setEditingId] = useState(null);
+
+  const customOfferingsList = useMemo(() => {
+    return offerings.filter(o => o.is_custom === true);
+  }, [offerings]);
+
+  const handleAddOrUpdateOffering = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingId) {
+        // Update
+        const res = await axios.put(`${API_BASE_URL}/api/offerings/${editingId}`, customCourse);
+        if (res.data.success) {
+          alert('Offering updated successfully!');
+          // Re-fetch all offerings
+          const dataRes = await axios.get(`${API_BASE_URL}/api/scrape/data`);
+          if (dataRes.data.entries) setOfferings(dataRes.data.entries);
+          setEditingId(null);
+          setCustomCourse({
+            course_code: '',
+            title: '',
+            units: '3',
+            section: '',
+            schedule_raw: '',
+            room: '',
+            instructor: '',
+            open_slots: '35'
+          });
+        }
+      } else {
+        // Create
+        const res = await axios.post(`${API_BASE_URL}/api/offerings`, customCourse);
+        if (res.data.success) {
+          alert('Offering created successfully!');
+          // Re-fetch all offerings
+          const dataRes = await axios.get(`${API_BASE_URL}/api/scrape/data`);
+          if (dataRes.data.entries) setOfferings(dataRes.data.entries);
+          setCustomCourse({
+            course_code: '',
+            title: '',
+            units: '3',
+            section: '',
+            schedule_raw: '',
+            room: '',
+            instructor: '',
+            open_slots: '35'
+          });
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Operation failed: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const handleDeleteOffering = async (id) => {
+    if (!confirm('Are you sure you want to delete this offering?')) return;
+    try {
+      const res = await axios.delete(`${API_BASE_URL}/api/offerings/${id}`);
+      if (res.data.success) {
+        alert('Offering deleted successfully!');
+        // Re-fetch all offerings
+        const dataRes = await axios.get(`${API_BASE_URL}/api/scrape/data`);
+        if (dataRes.data.entries) setOfferings(dataRes.data.entries);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Delete failed: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
@@ -942,6 +1024,122 @@ function Success() {
   return (
     <div className="success-container" style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', display: 'block', height: 'auto', minHeight: '100vh' }}>
       
+      {/* ===== CUSTOM OFFERINGS CRUD MODAL ===== */}
+      {showCrudModal && (
+        <div className="overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', zIndex: 1000 }}>
+          <div className="portal-card" style={{ 
+            background: '#ffffff', maxWidth: '800px', width: '100%', maxHeight: '90vh', overflowY: 'auto',
+            padding: '2.5rem', borderRadius: '24px', border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <div>
+                <span style={{ color: '#10b981', fontSize: '0.9rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Custom Offerings Manager</span>
+                <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#1e293b' }}>{editingId ? 'Edit Course Offering' : 'Add Custom Course Offering'}</h2>
+              </div>
+              <button onClick={() => { setShowCrudModal(false); setEditingId(null); }} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+            </div>
+
+            <form onSubmit={handleAddOrUpdateOffering} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569' }}>Subject Code *</label>
+                <input type="text" required placeholder="e.g. COMP101" value={customCourse.course_code} onChange={e => setCustomCourse(prev => ({ ...prev, course_code: e.target.value }))}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569' }}>Subject Title *</label>
+                <input type="text" required placeholder="e.g. Intro to Computer Science" value={customCourse.title} onChange={e => setCustomCourse(prev => ({ ...prev, title: e.target.value }))}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569' }}>Units *</label>
+                <input type="number" step="0.5" required placeholder="e.g. 3" value={customCourse.units} onChange={e => setCustomCourse(prev => ({ ...prev, units: e.target.value }))}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569' }}>Section *</label>
+                <input type="text" required placeholder="e.g. CS1" value={customCourse.section} onChange={e => setCustomCourse(prev => ({ ...prev, section: e.target.value }))}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: 'span 2' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569' }}>Schedule Raw * (Format: HH:MM AM/PM - HH:MM AM/PM Day)</label>
+                <input type="text" required placeholder="e.g. 10:30 AM - 12:00 PM TTh" value={customCourse.schedule_raw} onChange={e => setCustomCourse(prev => ({ ...prev, schedule_raw: e.target.value }))}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569' }}>Room</label>
+                <input type="text" placeholder="e.g. AL204" value={customCourse.room} onChange={e => setCustomCourse(prev => ({ ...prev, room: e.target.value }))}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569' }}>Instructor</label>
+                <input type="text" placeholder="e.g. Jane Doe" value={customCourse.instructor} onChange={e => setCustomCourse(prev => ({ ...prev, instructor: e.target.value }))}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: 'span 2' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569' }}>Open Slots *</label>
+                <input type="text" required placeholder="e.g. 35 or CLOSED" value={customCourse.open_slots} onChange={e => setCustomCourse(prev => ({ ...prev, open_slots: e.target.value }))}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+              </div>
+
+              <div style={{ gridColumn: 'span 2', display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                {editingId && (
+                  <button type="button" onClick={() => {
+                    setEditingId(null);
+                    setCustomCourse({
+                      course_code: '',
+                      title: '',
+                      units: '3',
+                      section: '',
+                      schedule_raw: '',
+                      room: '',
+                      instructor: '',
+                      open_slots: '35'
+                    });
+                  }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer' }}>Cancel Edit</button>
+                )}
+                <button type="submit" style={{ flex: 2, padding: '0.75rem', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
+                  {editingId ? 'Save Updates' : 'Add to Dashboard'}
+                </button>
+              </div>
+            </form>
+
+            <h3 style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', color: '#1e293b' }}>Custom Offerings List ({customOfferingsList.length})</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto', marginTop: '1rem' }}>
+              {customOfferingsList.map(o => (
+                <div key={o.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ flex: 1, marginRight: '1rem' }}>
+                    <span style={{ fontWeight: 'bold', color: '#10b981', marginRight: '0.5rem' }}>{o.course_code}</span>
+                    <span style={{ fontWeight: '600', color: '#1e293b' }}>{o.title}</span> (Sec: {o.section})
+                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>
+                      {o.schedule_raw} &bull; Room: {o.room || 'N/A'} &bull; Instructor: {o.instructor || 'N/A'}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button onClick={() => {
+                      setEditingId(o.id);
+                      setCustomCourse({
+                        course_code: o.course_code,
+                        title: o.title,
+                        units: String(o.units),
+                        section: o.section,
+                        schedule_raw: o.schedule_raw,
+                        room: o.room || '',
+                        instructor: o.instructor || '',
+                        open_slots: String(o.open_slots)
+                      });
+                    }} style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff', cursor: 'pointer', fontSize: '0.8rem' }}>✏️ Edit</button>
+                    <button onClick={() => handleDeleteOffering(o.id)} style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', cursor: 'pointer', fontSize: '0.8rem' }}>🗑️ Delete</button>
+                  </div>
+                </div>
+              ))}
+              {customOfferingsList.length === 0 && (
+                <p style={{ textAlign: 'center', color: '#64748b', fontStyle: 'italic' }}>No custom offerings created yet.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* ===== INITIALIZING / SYNCING SCREEN ===== */}
       {isFirstScrape && (scrapeStatus === 'scraping' || scrapeStatus === 'idle') && (
         <div className="first-scrape-layout">
@@ -1056,6 +1254,21 @@ function Success() {
                 }}
               >
                 Go to advisement
+              </button>
+              <button 
+                onClick={() => setShowCrudModal(true)}
+                className="login-btn"
+                style={{ 
+                  marginTop: 0, 
+                  padding: '0.75rem 1.5rem', 
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+                  whiteSpace: 'nowrap', 
+                  maxWidth: '350px', 
+                  fontSize: '0.95rem',
+                  boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
+                }}
+              >
+                🛠️ Custom Offerings
               </button>
               <button 
                 onClick={() => { sessionStorage.clear(); window.location.href = '/'; }}
