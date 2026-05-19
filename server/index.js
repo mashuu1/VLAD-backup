@@ -877,6 +877,14 @@ app.get('/api/scrape/data', async (req, res) => {
 // DATABASE CRUD ENDPOINTS
 // =============================================
 
+// GET Supabase configuration for client (safe public credentials)
+app.get('/api/supabase-config', (req, res) => {
+    res.json({
+        supabaseUrl: process.env.SUPABASE_URL,
+        supabaseAnonKey: process.env.SUPABASE_KEY
+    });
+});
+
 // CREATE a manual course offering
 app.post('/api/offerings', async (req, res) => {
     try {

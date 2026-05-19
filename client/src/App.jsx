@@ -6,7 +6,7 @@ import './index.css';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vlad-trends-backend.shares.zrok.io';
 import { getDifficulty } from './difficulty_map';
 import { downloadScheduleAsPNG } from './pdfUtils';
-import { supabase } from './supabase';
+import { supabase, initializeSupabaseClient } from './supabase';
 
 
 function Login() {
@@ -713,11 +713,39 @@ function SchedulerQuestionnaire({ advisedSubjects, offerings, onGenerate, onCanc
 function Success() {
   const [offerings, setOfferings] = useState([]);
   
+  // Dynamic credentials fallback state to trigger subscriptions
+  const [realtimeClient, setRealtimeClient] = useState(supabase);
+
   useEffect(() => {
-    console.log('[Vlad Debug] Supabase client state:', supabase ? 'READY' : 'NULL (Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY env variables)');
-    if (supabase) {
-      console.log('[Vlad Debug] Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-    }
+    const fetchSupabaseConfig = async () => {
+      // 1. If static client is already initialized, use it immediately
+      if (supabase) {
+        console.log('[Vlad Debug] Supabase client is statically READY from build env.');
+        setRealtimeClient(supabase);
+        return;
+      }
+
+      // 2. Otherwise, fetch credentials dynamically from the backend server
+      console.log('[Vlad Debug] Supabase client NULL at build. Fetching dynamic runtime config from backend...');
+      try {
+        const configRes = await axios.get(`${API_BASE_URL}/api/supabase-config`);
+        if (configRes.data.supabaseUrl && configRes.data.supabaseAnonKey) {
+          const client = initializeSupabaseClient(configRes.data.supabaseUrl, configRes.data.supabaseAnonKey);
+          if (client) {
+            console.log('[Vlad Debug] Supabase client successfully initialized dynamically at runtime!');
+            setRealtimeClient(client);
+          } else {
+            console.warn('[Vlad Debug] Dynamic initialization returned null client.');
+          }
+        } else {
+          console.warn('[Vlad Debug] Backend returned empty Supabase credentials.');
+        }
+      } catch (err) {
+        console.error('[Vlad Debug] Failed to fetch dynamic Supabase credentials from backend:', err.message);
+      }
+    };
+
+    fetchSupabaseConfig();
   }, []);
 
   const [scrapeStatus, setScrapeStatus] = useState('idle');
@@ -971,8 +999,8 @@ function Success() {
 
   // Realtime listener for course offerings (Zero refresh instant sync)
   useEffect(() => {
-    if (!supabase) return;
-    const channel = supabase
+    if (!realtimeClient) return;
+    const channel = realtimeClient
       .channel('public:course_offerings')
       .on(
         'postgres_changes',
@@ -1004,9 +1032,9 @@ function Success() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      realtimeClient.removeChannel(channel);
     };
-  }, []);
+  }, [realtimeClient]);
 
   // Use sessionStorage to track if we have already seen a 'done' status in this browser session
   // This ensures that navigating back and forth between tabs doesn't re-trigger the loading screen
@@ -1709,10 +1737,38 @@ function Kaizen() {
   const [userPreferences, setUserPreferences] = useState(null);
   const [isDownloading, setIsDownloading] = useState(null);
 
+  // Dynamic credentials fallback state to trigger subscriptions in Kaizen Advisement page
+  const [realtimeClient, setRealtimeClient] = useState(supabase);
+
+  useEffect(() => {
+    const fetchSupabaseConfig = async () => {
+      // 1. If static client is already initialized, use it immediately
+      if (supabase) {
+        setRealtimeClient(supabase);
+        return;
+      }
+
+      // 2. Otherwise, fetch credentials dynamically from the backend server
+      try {
+        const configRes = await axios.get(`${API_BASE_URL}/api/supabase-config`);
+        if (configRes.data.supabaseUrl && configRes.data.supabaseAnonKey) {
+          const client = initializeSupabaseClient(configRes.data.supabaseUrl, configRes.data.supabaseAnonKey);
+          if (client) {
+            setRealtimeClient(client);
+          }
+        }
+      } catch (err) {
+        console.error('[Vlad Debug] Failed to fetch dynamic Supabase credentials from backend:', err.message);
+      }
+    };
+
+    fetchSupabaseConfig();
+  }, []);
+
   // Realtime listener for course offerings in Kaizen Advisement page (Zero refresh instant sync)
   useEffect(() => {
-    if (!supabase) return;
-    const channel = supabase
+    if (!realtimeClient) return;
+    const channel = realtimeClient
       .channel('kaizen:course_offerings')
       .on(
         'postgres_changes',
@@ -1743,9 +1799,9 @@ function Kaizen() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      realtimeClient.removeChannel(channel);
     };
-  }, []);
+  }, [realtimeClient]);
 
   const handleDownload = async (index) => {
     setIsDownloading(index);
