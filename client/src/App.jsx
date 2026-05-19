@@ -712,6 +712,14 @@ function SchedulerQuestionnaire({ advisedSubjects, offerings, onGenerate, onCanc
 
 function Success() {
   const [offerings, setOfferings] = useState([]);
+  
+  useEffect(() => {
+    console.log('[Vlad Debug] Supabase client state:', supabase ? 'READY' : 'NULL (Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY env variables)');
+    if (supabase) {
+      console.log('[Vlad Debug] Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+    }
+  }, []);
+
   const [scrapeStatus, setScrapeStatus] = useState('idle');
   const [progress, setProgress] = useState({ currentPage: 0, totalEntries: 0 });
   const [error, setError] = useState('');
