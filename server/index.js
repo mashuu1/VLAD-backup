@@ -16,6 +16,43 @@ const supabase = createClient(
     process.env.SUPABASE_KEY
 );
 
+// Paginated helper to fetch ALL records from a Supabase table (bypassing default 1000-row limit)
+async function fetchFullTable(tableName, orderColumn = 'id') {
+    let allData = [];
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+
+    while (hasMore) {
+        const fromRange = page * pageSize;
+        const toRange = fromRange + pageSize - 1;
+        
+        let query = supabase.from(tableName).select('*').range(fromRange, toRange);
+        if (orderColumn) {
+            query = query.order(orderColumn, { ascending: true });
+        }
+        
+        const { data, error } = await query;
+        if (error) {
+            console.error(`[fetchFullTable] Error on page ${page} of ${tableName}:`, error.message);
+            throw error;
+        }
+
+        if (data && data.length > 0) {
+            allData = allData.concat(data);
+            if (data.length < pageSize) {
+                hasMore = false;
+            } else {
+                page++;
+            }
+        } else {
+            hasMore = false;
+        }
+    }
+
+    return allData;
+}
+
 chromium.use(stealth);
 
 const app = express();
@@ -641,8 +678,8 @@ app.get('/api/scrape/status', (req, res) => {
 app.get('/api/scrape/data', async (req, res) => {
     // 1. Primary: Try Supabase directly (always gives freshest CRUD + scraped data)
     try {
-        const { data, error } = await supabase.from('course_offerings').select('*').order('course_code', { ascending: true });
-        if (!error && data && data.length > 0) {
+        const data = await fetchFullTable('course_offerings', 'course_code');
+        if (data && data.length > 0) {
             return res.json({ 
                 source: 'supabase', 
                 total: data.length, 
@@ -1323,16 +1360,15 @@ app.post('/api/kaizen/generate', async (req, res) => {
     try {
         let offerings = [];
         console.log('[KAIZEN Generator] Fetching offerings from Supabase...');
-        const { data, error } = await supabase.from('course_offerings').select('*');
-        if (error) {
-            console.error('[KAIZEN Generator] Error fetching from Supabase, trying local file backup:', error);
+        try {
+            offerings = await fetchFullTable('course_offerings', 'course_code');
+        } catch (err) {
+            console.error('[KAIZEN Generator] Error fetching from Supabase, trying local file backup:', err);
             if (fs.existsSync('./data/offerings.json')) {
                 offerings = JSON.parse(fs.readFileSync('./data/offerings.json', 'utf8'));
             } else {
-                throw error;
+                throw err;
             }
-        } else {
-            offerings = data;
         }
         // Always apply unit overrides when loading offerings (catches stale disk data)
         applyUnitOverrides(offerings);
@@ -1929,19 +1965,21 @@ async function initServerData() {
     console.log('[Init] Checking for existing data in Supabase (Primary Source)...');
     try {
         // 1. Fetch offerings from Supabase
-        const { data: offeringsData, error: offError } = await supabase.from('course_offerings').select('*');
-        if (!offError && offeringsData && offeringsData.length > 0) {
-            scrapeState.entries = offeringsData;
-            scrapeState.totalEntries = offeringsData.length;
-            scrapeState.status = 'done';
-            scrapeState.lastScrapeTime = new Date().toISOString();
-            console.log(`[Init] Loaded ${offeringsData.length} offerings from Supabase.`);
-            
-            // Save local file backup
-            if (!fs.existsSync('./data')) fs.mkdirSync('./data');
-            fs.writeFileSync('./data/offerings.json', JSON.stringify(offeringsData, null, 2));
-        } else if (offError) {
-            console.warn('[Init] Supabase offerings load failed, attempting local file backup:', offError.message);
+        try {
+            const offeringsData = await fetchFullTable('course_offerings', 'course_code');
+            if (offeringsData && offeringsData.length > 0) {
+                scrapeState.entries = offeringsData;
+                scrapeState.totalEntries = offeringsData.length;
+                scrapeState.status = 'done';
+                scrapeState.lastScrapeTime = new Date().toISOString();
+                console.log(`[Init] Loaded ${offeringsData.length} offerings from Supabase.`);
+                
+                // Save local file backup
+                if (!fs.existsSync('./data')) fs.mkdirSync('./data');
+                fs.writeFileSync('./data/offerings.json', JSON.stringify(offeringsData, null, 2));
+            }
+        } catch (offError) {
+            console.warn('[Init] Supabase offerings load failed, attempting local file backup:', offError.message || offError);
             if (fs.existsSync('./data/offerings.json')) {
                 const local = JSON.parse(fs.readFileSync('./data/offerings.json', 'utf8'));
                 if (local.length > 0) {
